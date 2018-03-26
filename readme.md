@@ -1,6 +1,6 @@
 # Canary
 
-Canary is a tool for writing and running automated tests in JavaScript code. It was written primarily to support keeping tests and implementation in close proximity; it is the belief of this developer that it should not be possible to view or work on tests and implementation in isolation from one another.
+Canary is a tool for writing and running automated tests in JavaScript code. It was written with tests and implementation sharing the same file foremost in mind. When tests and implementation are close together, it's more difficult to forget or ignore tests when making changes to the implementation.
 
 Canary lets you control where and how you write your tests, how they are run, and how their results are reported. In case you aren't worried about the specifics of your how your test runner functions and reports results, just as long as it works, Canary can also run tests and report results with one function call for sensible default behavior.
 
@@ -58,5 +58,3 @@ Finished running 4 tests.
 4 of 4 tests passed.
 Status: OK
 ```
-
-
