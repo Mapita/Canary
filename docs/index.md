@@ -11,14 +11,13 @@ Canary can be installed and added to a JavaScript project with `npm install cana
 A simple example of JavaScript code tested using Canary:
 
 ``` js
-const canary = require("canary-test"); // This library
-const assert = require("assert"); // Node's built-in assertion library
+// This library
+const canary = require("canary-test");
+// Node's built-in assertion library
+const assert = require("assert");
 
 // A function that ought to be tested
 function leftPad(value, length){
-    if(value.length >= length){
-        return String(value);
-    }
     let text = String(value);
     while(text.length < length){
         text = " " + text;

@@ -11,13 +11,13 @@ Canary works best when used in combination with an assertion library such as [ch
 Here's a simple example of JavaScript code tested using Canary:
 
 ``` js
-const canary = require("canary-test"); // This library
-const assert = require("assert"); // Node's built-in assertion library
+// This library
+const canary = require("canary-test");
+// Node's built-in assertion library
+const assert = require("assert");
 
+// A function that ought to be tested
 function leftPad(value, length){
-    if(value.length >= length){
-        return String(value);
-    }
     let text = String(value);
     while(text.length < length){
         text = " " + text;
@@ -25,6 +25,7 @@ function leftPad(value, length){
     return text;
 }
 
+// Tests written using Canary
 canary.group("leftPad", function(){
     this.test("returns the input when it's as long as or longer than the input length", () => {
         assert.equal(leftPad("hello", 3), "hello");
