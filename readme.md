@@ -49,7 +49,7 @@ require("canary-test").doReport();
 And this would output to the console...
 
 ``` text
-sophie:shorter pineapple$ node testLeftPad.js
+sophie:canary pineapple$ node testLeftPad.js
 Running tests via Canary...
 Completed test "leftPad => returns the input when it's as long as or longer than the input length". (0.000s)
 Completed test "leftPad => pads shorter inputs with spaces to match the desired length". (0.000s)
