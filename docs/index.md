@@ -2,7 +2,7 @@
 
 Canary is a tool for writing and running automated tests in JavaScript code.
 
-https://github.com/mapita/canary
+[https://github.com/mapita/canary](https://github.com/mapita/canary)
 
 ## Installation
 
@@ -16,6 +16,7 @@ A simple example of JavaScript code tested using Canary:
 const canary = require("canary-test"); // This library
 const assert = require("assert"); // Node's built-in assertion library
 
+// A function that ought to be tested
 function leftPad(value, length){
     if(value.length >= length){
         return String(value);
@@ -27,6 +28,7 @@ function leftPad(value, length){
     return text;
 }
 
+// Tests written using Canary
 canary.group("leftPad", function(){
     this.test("returns the input when it's as long as or longer than the input length", () => {
         assert.equal(leftPad("hello", 3), "hello");

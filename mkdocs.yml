@@ -1,0 +1,5 @@
+site_name: Canary
+pages:
+    - Home: docs/index.md
+    - API Documentation: docs/api.md
+theme: readthedocs
