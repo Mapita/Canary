@@ -1,5 +1,3 @@
-# Canary
-
 Canary is a tool for writing and running automated tests in JavaScript code.
 
 [https://github.com/mapita/canary](https://github.com/mapita/canary)
@@ -64,6 +62,3 @@ Finished running 4 tests.
 4 of 4 tests passed.
 Status: OK
 ```
-
-
-

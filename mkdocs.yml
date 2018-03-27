@@ -1,5 +1,13 @@
 site_name: Canary
 pages:
     - Home: index.md
-    - API Documentation: api.md
+    - API Documentation:
+      - Introduction: api-introduction.md
+      - Adding Tests: api-adding-tests.md
+      - Adding Callbacks: api-group-callbacks.md
+      - Running Tests: api-running-tests.md
+      - Intermediate Usage: api-intermediate-usage.md
+      - Advanced Usage: api-advanced-usage.md
+      - Callback Class: api-callback-class.md
+      - Error Class: api-error-class.md
 theme: readthedocs
