@@ -392,7 +392,7 @@ Get a summary string describing the status of every test that was attempted.
 
 Example of a string returned by a call to `getSummary` after running tests:
 
-``` text
+```
 ✓ Canary (0.003s)
   ✓ leftPad (0.001s)
     ✓ returns the input when it's as long as or longer than the input length (0.000s)
