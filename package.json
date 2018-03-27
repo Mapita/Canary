@@ -2,7 +2,9 @@
   "name": "canary-test",
   "version": "0.1.0",
   "description": "Write and run automated tests in JavaScript code.",
-  "keywords": ["test", "testing", "unit test", "automated test", "stability"],
+  "keywords": [
+    "test", "testing", "unit test", "automated test", "stability"
+  ],
   "homepage": "https://github.com/Mapita/Canary",
   "license": "MIT",
   "dependencies": {},
@@ -15,11 +17,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Mapita/Canary.git",
+    "url": "https://github.com/Mapita/Canary.git"
   },
   "bugs": {
     "url": "https://github.com/Mapita/Canary/issues",
-    "email": "dev.messages@mapita.fi",
+    "email": "dev.messages@mapita.fi"
   },
   "contributors": [
     {
