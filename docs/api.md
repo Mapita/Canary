@@ -1,12 +1,18 @@
 # API Documentation
 
-Canary's API is the interface used to write and read automated JavaScript tests. It is built on the `CanaryTest` class, and the global instance of this class acquired by importing the Canary package. By convention, this global instance should be referred to as `canary`.
+Canary's API is the interface used to write and to run automated JavaScript tests. It is built on the `CanaryTest` class and on the global instance of this class acquired by importing the Canary package. By convention, this global instance should be referred to as `canary`.
 
 ``` js
 const canary = require("canary-test");
 ```
 
-The library also utilizes `CanaryTestCallback` and `CanaryTestError` classes. These classes can be referred to with `canary.Callback` and `canary.Error`, respectively. These classes are mainly for internal use and, normally, it will not be necessary to work with them.
+The `CanaryTest` class can be referred to via `canary.Test`. Although most of the work done with Canary will be using the methods of instances of this class, it should rarely if ever be necessary to instantiate a `CanaryTest` yourself.
+
+``` js
+assert(canary instanceof canary.Test);
+```
+
+The library also utilizes `CanaryTestCallback` and `CanaryTestError` classes. These classes can be referred to with `canary.Callback` and `canary.Error`, respectively. These classes are mainly for internal use and, normally, it will not be necessary to work with them directly.
 
 ## Adding Tests
 
@@ -16,11 +22,13 @@ Tests and test groups can optionally be assigned names. It is strongly recommend
 
 ### test
 
-Add a test. Tests are added to test groups. This results in a test hierarchy, where the created test is a child of the test group it was added to.
-
-It is possible to add a test as a child of another test, instead of a test group; however, this is not a recommended practice.
+Add an individual test. Tests are added to test groups. This results in a test tree, or hierarchy, where the test created in this way is a child of the test group it was added to.
 
 **Arguments:** `({string} name, {function} body)` _or_ `({function} body)`
+
+If the body function returns a `Promise`, then when the test is run Canary will wait to see if the promise is resolved or rejected before completing the test and progressing to the next one. (A resolved promise indicates that this part of the test ran without errors and a rejected promise is handled the same as an unhandled thrown error.)
+
+When the body function is called, both `this` and the first argument will refer to the test to which the function belongs.
 
 **Returns:** The newly-created `CanaryTest` instance.
 
@@ -40,11 +48,22 @@ canary.group("Example test group", function(){
 });
 ```
 
+``` js
+canary.test("Example asynchronous test", async function(){
+    const result = await someAsyncFunction();
+    assert(result === 10);
+});
+```
+
 ### group
 
 Add a test group. A test group is a special kind of test that may have child tests and callbacks such as `onBegin` and `onEnd`, but must not itself contain test logic.
 
 **Arguments:** `({string} name, {function} body)` _or_ `({function} body)`
+
+The body function should be synchronous. If it happens to return a `Promise` then, unlike a test instantiated with the `test` method, Canary will not wait for that promise to be resolved or rejected.
+
+When the body function is called, both `this` and the first argument will refer to the test to which the function belongs.
 
 **Returns:** The newly-created `CanaryTest` instance.
 
@@ -67,23 +86,41 @@ canary.group("Example test group", function(){
 
 ## Test Group Callbacks
 
-These `CanaryTest` methods can be used to add callbacks in test groups. This becomes useful if a certain setup action must be done before running the tests in the group and corresponding tear-down action after, or if such actions must be performed before and after every test in a group.
+These `CanaryTest` methods can be used to add callbacks in test groups. This becomes useful if a certain setup action must be done before running the tests in the group and a corresponding tear-down action after, or if such actions must be performed before and after every test in a group.
 
 Test callbacks can optionally be assigned names. Descriptive callback names will make it easier to understand where errors occur, when they occur.
 
-These methods return `CanaryTestCallback` instances, which wrap the given callbacks and names in a simple class instance along with some other data.
+These methods return `CanaryTestCallback` instances, which wrap the given callbacks and names together with some other relevant data. It should rarely if ever be necessary to store or handle the return values of these methods.
 
 ### onBegin
 
 Add a callback that is run when a test group is begun. More than one callback can be added in this way. The callbacks are run in the order they were added.
 
-`onBegin` callbacks run after `onEachBegin` callbacks and before all others. They run before child tests but after evaluating a test group's body function. (Normally, the body function is resposible for adding the callback in the first place.)
+`onBegin` callbacks run after `onEachBegin` callbacks and before all others. They run before child tests but after evaluating a test group's body function. (Normally, the body function is responsible for adding the callback in the first place.)
 
 If any `onBegin` callback produces an error or otherwise aborts the test, any remaining `onBegin` callbacks will be ignored.
 
 **Arguments:** `({string} name, {function} callback)` _or_ `({function} callback)`
 
+The callback function is invoked with both `this` and the first argument referring to the just-begun test group.
+
 **Returns:** The new `CanaryTestCallback` instance that was added to the test group.
+
+**Examples:**
+
+``` js
+canary.group("Example test group", function(){
+    this.onBegin("Set up the tests", function(){
+        doSetupStuff();
+    });
+    this.test("First example test", function(){
+        assert("hello" === "hello");
+    });
+    this.test("Second example test", function(){
+        assert("world" === "world");
+    });
+});
+```
 
 ### onEnd
 
@@ -95,7 +132,25 @@ If any `onEnd` callback produces an error or otherwise aborts the test, any rema
 
 **Arguments:** `({string} name, {function} callback)` _or_ `({function} callback)`
 
+The callback function is invoked with both `this` and the first argument referring to the ended test group.
+
 **Returns:** The new `CanaryTestCallback` instance that was added to the test group.
+
+**Examples:**
+
+``` js
+canary.group("Example test group", function(){
+    this.test("First example test", function(){
+        assert("hello" === "hello");
+    });
+    this.test("Second example test", function(){
+        assert("world" === "world");
+    });
+    this.onEnd("Clean up after the tests", function(){
+        doCleanUpStuff();
+    });
+});
+```
 
 ### onSuccess
 
@@ -109,7 +164,25 @@ If any `onSuccess` callback produces an error or otherwise aborts the test, any 
 
 **Arguments:** `({string} name, {function} callback)` _or_ `({function} callback)`
 
+The callback function is invoked with both `this` and the first argument referring to the successful test group.
+
 **Returns:** The new `CanaryTestCallback` instance that was added to the test group.
+
+**Examples:**
+
+``` js
+canary.group("Example test group", function(){
+    this.test("First example test", function(){
+        assert("hello" === "hello");
+    });
+    this.test("Second example test", function(){
+        assert("world" === "world");
+    });
+    this.onSuccess("Run after all tests passed", function(){
+        doSuccessStuff();
+    });
+});
+```
 
 ### onFailure
 
@@ -123,19 +196,55 @@ If any `onFailure` callback produces an error or otherwise aborts the test, any 
 
 **Arguments:** `({string} name, {function} callback)` _or_ `({function} callback)`
 
+The callback function is invoked with both `this` and the first argument referring to the failed test group.
+
 **Returns:** The new `CanaryTestCallback` instance that was added to the test group.
+
+**Examples:**
+
+``` js
+canary.group("Example test group", function(){
+    this.test("First example test", function(){
+        assert("hello" === "hello");
+    });
+    this.test("Second example test", function(){
+        assert("world" === "world");
+    });
+    this.onFailure("Run after any tests failed", function(){
+        doFailureStuff();
+    });
+});
+```
 
 ### onEachBegin
 
 Add a callback that is run once as every test belonging to a group is begun. More than one callback can be added in this way. The callbacks are run in the order they were added. The callbacks apply only to immediate child tests and test groups; they are not applied recursively.
 
-`onEachBegin` callbacks run before all other callbacks. They run before child tests but after evaluating a test group's body function. (Normally, the body function is resposible for adding the callback in the first place.)
+`onEachBegin` callbacks run before all other callbacks. They run before child tests but after evaluating a test group's body function. (Normally, the body function is responsible for adding the callback in the first place.)
 
 If any `onEachBegin` callback produces an error or otherwise aborts the test, any remaining `onEachBegin` and `onBegin` callbacks will be ignored.
 
 **Arguments:** `({string} name, {function} callback)` _or_ `({function} callback)`
 
+The callback function is invoked with both `this` and the first argument referring to the begun test, _not_ the test group to which the callback was added. The test group to which the callback was added (and of which the just-begun test is a child) can be referred to via the `parent` property. For example, via `this.parent`.
+
 **Returns:** The new `CanaryTestCallback` instance that was added to the test group.
+
+**Examples:**
+
+``` js
+canary.group("Example test group", function(){
+    this.onEachBegin("Set up each test", function(){
+        doSetupStuff();
+    });
+    this.test("First example test", function(){
+        assert("hello" === "hello");
+    });
+    this.test("Second example test", function(){
+        assert("world" === "world");
+    });
+});
+```
 
 ### onEachEnd
 
@@ -147,7 +256,25 @@ If any `onEachEnd` callback produces an error or otherwise aborts the test, any 
 
 **Arguments:** `({string} name, {function} callback)` _or_ `({function} callback)`
 
+The callback function is invoked with both `this` and the first argument referring to the ended test, _not_ the test group to which the callback was added. The test group to which the callback was added (and of which the ended test is a child) can be referred to via the `parent` property. For example, via `this.parent`.
+
 **Returns:** The new `CanaryTestCallback` instance that was added to the test group.
+
+**Examples:**
+
+``` js
+canary.group("Example test group", function(){
+    this.test("First example test", function(){
+        assert("hello" === "hello");
+    });
+    this.test("Second example test", function(){
+        assert("world" === "world");
+    });
+    this.onEachEnd("Clean up after each test", function(){
+        doCleanUpStuff();
+    });
+});
+```
 
 ### onEachSuccess
 
@@ -161,7 +288,25 @@ If any `onEachSuccess` callback produces an error or otherwise aborts the test, 
 
 **Arguments:** `({string} name, {function} callback)` _or_ `({function} callback)`
 
+The callback function is invoked with both `this` and the first argument referring to the successful test, _not_ the test group to which the callback was added. The test group to which the callback was added (and of which the successful test is a child) can be referred to via the `parent` property. For example, via `this.parent`.
+
 **Returns:** The new `CanaryTestCallback` instance that was added to the test group.
+
+**Examples:**
+
+``` js
+canary.group("Example test group", function(){
+    this.test("First example test", function(){
+        assert("hello" === "hello");
+    });
+    this.test("Second example test", function(){
+        assert("world" === "world");
+    });
+    this.onEachSuccess("Run after every successful test", function(){
+        doSuccessStuff();
+    });
+});
+```
 
 ### onEachFailure
 
@@ -175,42 +320,31 @@ If any `onEachFailure` callback produces an error or otherwise aborts the test, 
 
 **Arguments:** `({string} name, {function} callback)` _or_ `({function} callback)`
 
+The callback function is invoked with both `this` and the first argument referring to the failed test, _not_ the test group to which the callback was added. The test group to which the callback was added (and of which the failing test is a child) can be referred to via the `parent` property. For example, via `this.parent`.
+
 **Returns:** The new `CanaryTestCallback` instance that was added to the test group.
+
+**Examples:**
+
+``` js
+canary.group("Example test group", function(){
+    this.test("First example test", function(){
+        assert("hello" === "hello");
+    });
+    this.test("Second example test", function(){
+        assert("world" === "world");
+    });
+    this.onEachFailure("Run after any failed test", function(){
+        doFailureStuff();
+    });
+});
+```
 
 ## Running Tests
 
-### run
-
-Run the test asynchronously.
-
-**Returns:** A `Promise` which is resolved when the test is completed. This promise should not be rejected, even in the case of a test failure.
-
-### getSummary
-
-Get a summary string describing the status of every test that was attempted.
-
-Example of a string returned by a call to `getSummary` after running tests:
-
-``` text
-✓ Canary (0.003s)
-  ✓ leftPad (0.001s)
-    ✓ returns the input when it's as long as or longer than the input length (0.000s)
-    ✓ pads shorter inputs with spaces to match the desired length (0.000s)
-```
-
-**Returns:** A string showing all the tests that were run using Canary and their status.
-
-### getReport
-
-Get an object containing a list of passed tests, a list of failed tests, a list of skipped tests, and a list of errors.
-
-The lists of tests are arrays of `CanaryTest` instances. The list of errors is an array of `CanaryTestError` instances.
-
-**Returns:** An object with `passed`, `failed`, `skipped`, and `errors` attributes.
-
 ### doReport
 
-A single, one-size-fits-most call to run tests, output a report to the console, then terminate the process with an appropriate status code.
+A single, one-size-fits-most call to run tests, output a report to the console, then terminate the process with an appropriate status code. Except for when significant customization of the testing process or report output is needed, this method alone should be fully sufficient to run tests.
 
 **Arguments:** `({object} options)`
 
@@ -228,13 +362,60 @@ When a filter applies positively to a test, that test's containing group, and it
 
 Note that when more than one filter is specified using e.g. the `filter`, `names`, or `tags` attributes, tests which match _any_ of the specified criteria will be run.
 
-**Returns:** The same as `getReport`, if the `keepAlive` flag was given in the options. (Otherwise, the function will terminate the program.)
+**Returns:** An object with `passed`, `failed`, `skipped`, and `errors` attributes.
+
+Note that the returned object is exactly the same as if `getReport` was called after running tests. This is only meaningful, however, if the `keepAlive` flag was given in the options object. (Otherwise, the function will terminate the program.)
 
 **Examples:**
 
 ``` js
+// A module containing a leftPad implementation and unit tests
 require("leftPad.js");
+// Run tests, output a report, then terminate with an appropriate status code
 require("canary-test").doReport();
+```
+
+### getReport
+
+Get an object containing a list of passed tests, a list of failed tests, a list of skipped tests, and a list of errors.
+
+The lists of tests are arrays of `CanaryTest` instances. The list of errors is an array of `CanaryTestError` instances.
+
+Note that the list of errors includes even those errors encountered while running tests that were later found to be marked as ignored or to be otherwise skipped. Due to this, the presence of errors in the list does not necessarily indicate a test suite failure.
+
+
+**Returns:** An object with `passed`, `failed`, `skipped`, and `errors` attributes.
+
+### getSummary
+
+Get a summary string describing the status of every test that was attempted.
+
+Example of a string returned by a call to `getSummary` after running tests:
+
+``` text
+✓ Canary (0.003s)
+  ✓ leftPad (0.001s)
+    ✓ returns the input when it's as long as or longer than the input length (0.000s)
+    ✓ pads shorter inputs with spaces to match the desired length (0.000s)
+```
+
+**Returns:** A string showing all the tests that were run using Canary and their status.
+
+### run
+
+Run the test asynchronously.
+
+**Returns:** A `Promise` which is resolved when the test is completed. This promise should not ever be rejected, even in the case of a test failure.
+
+**Examples:**
+
+``` js
+canary.test("Example test", function(){
+    assert(123 < 456);
+});
+canary.run().then(() => {
+    console.log("Finished running tests!");
+});
 ```
 
 ## Intermediate Usage
@@ -331,83 +512,6 @@ canary.test("Example test", function(){
 });
 ```
 
-
-## Status Attributes
-
-These are attributes of every `CanaryTest` instance that indicate test status. In general, it should not be necessary to access these attributes explicitly. It is not recommended that these attributes be overwritten.
-
-### aborted
-
-Indicates whether the test has been aborted.
-
-**Value:** `true` when the the test has been aborted and `false` when it has not.
-
-### attempted
-
-Indicates whether the test has been or is being attempted.
-
-**Value:** `true` when the test was or is being attempted and `false` when it was not.
-
-### skipped
-
-Indicates whether the test was skipped or discovered to be marked to be skipped while the test was being initialized to be run. Not all skipped tests will have this flag set, however all tests with this flag set were certainly skipped.
-
-**Value:** `true` when the the test was skipped while running and `false` when it was not.
-
-### success
-
-Indicates whether the test was completed successfully.
-
-**Value:** `true` when the test was completed without errors `false` when it was not.
-
-### startTime
-
-Indicates the time at which the test was run.
-
-**Value:** The number of milliseconds elapsed between January 1, 1970 and the time the test was started.
-
-### endTime
-
-Indicates the time at which the test ended, whether due to success or failure.
-
-**Value:** The number of milliseconds elapsed between January 1, 1970 and the time the test ended.
-
-### filtered
-
-Indicates whether the test and all of its descendants failed to satisfy a test filter. Tests that have been filtered out will be skipped when tests are run.
-
-**Value:** `true` when the test has been filtered out and `false` when it has not been.
-
-### isTodo
-
-Indicates whether the test has been marked as "todo". Tests marked as "todo" are skipped when tests are run, if known ahead of time, and any errors that might be encountered inside them are not recorded as test failures.
-
-**Value:** `true` when the test has been marked as "todo" and `false` when it has not.
-
-### isIgnored
-
-Indicates whether the test is intended to be ignored. Ignored tests are skipped when tests are run, if known ahead of time, and any errors that might be encountered inside them are not recorded as test failures.
-
-**Value:** `true` when the test has been marked as ignored and `false` when it has not.
-
-### isSilent
-
-Indicates whether the test has been marked as silent.
-
-**Value:** `true` when the test has been marked as silent and `false` when it has not.
-
-### isVerbose
-
-Indicates whether the test has been marked as verbose.
-
-**Value:** `true` when the test has been marked as verbose and `false` when it has not.
-
-### isGroup
-
-Indicates whether this is a test group, as opposed to an individual test.
-
-**Value:** `true` when this `CanaryTest` instance represents a test group and `false` when it represents an individual test.
-
 ## Advanced Usage
 
 These `CanaryTest` class methods are for those who need more complex or customized behavior from Canary. They are not relevant to the majority of users.
@@ -443,7 +547,6 @@ canary.test("Example verbose test", function(){
     this.verbose();
 });
 ```
-
 
 ### shouldSkip
 
@@ -504,8 +607,6 @@ Get a string representing the status of this test.
 
 **Returns:** `"skipped"` if the test was marked as skipped or was never attempted, `"passed"` if the test completed successfully, or `"failed"` if the test was unsuccessful.
 
-
-
 ### durationSeconds
 
 Get the length of time taken to run this test, in seconds.
@@ -553,7 +654,6 @@ Get whether this test was run without encountering any errors.
 Get a list of errors that were encountered while attempting this test, if any.
 
 **Returns:** An array of `CanaryTestError` objects encountered while running this test.
-
 
 ### add
 
@@ -605,6 +705,83 @@ Recursively run all the body functions assigned to test groups, but not to ordin
 
 Group expansion is put off until tests are actually needed in order to make the startup performance impact of including tests in an application source file close to nonexistent, even in the case of testing code errors that could potentially cause hangups, since extremely little work is done at the time of declaration.
 
+## Status Attributes
+
+These are attributes of every `CanaryTest` instance that indicate test status. In general, it should not be necessary to access these attributes explicitly. It is not recommended that these attributes be overwritten.
+
+### aborted
+
+Indicates whether the test has been aborted.
+
+**Value:** `true` when the the test has been aborted and `false` when it has not.
+
+### attempted
+
+Indicates whether the test has been or is being attempted.
+
+**Value:** `true` when the test was or is being attempted and `false` when it was not.
+
+### skipped
+
+Indicates whether the test was skipped or discovered to be marked to be skipped while the test was being initialized to be run. Not all tests whose status is indicated as "skipped" will have this flag set, however all tests with this flag set were certainly skipped.
+
+To reliably check whether a test's status should qualify as skipped, try `test.skipped || !test.attempted`.
+
+**Value:** `true` when the the test was skipped while running and `false` when it was not.
+
+### success
+
+Indicates whether the test was completed successfully.
+
+**Value:** `true` when the test was completed without errors `false` when it was not.
+
+### startTime
+
+Indicates the time at which the test was run.
+
+**Value:** The number of milliseconds elapsed between January 1, 1970 and the time the test was started.
+
+### endTime
+
+Indicates the time at which the test ended, whether due to success or failure.
+
+**Value:** The number of milliseconds elapsed between January 1, 1970 and the time the test ended.
+
+### filtered
+
+Indicates whether the test and all of its descendants failed to satisfy a test filter. Tests that have been filtered out will be skipped when tests are run.
+
+**Value:** `true` when the test has been filtered out and `false` when it has not been.
+
+### isTodo
+
+Indicates whether the test has been marked as "todo". Tests marked as "todo" are skipped when tests are run, if known ahead of time, and any errors that might be encountered inside them are not recorded as test failures.
+
+**Value:** `true` when the test has been marked as "todo" and `false` when it has not.
+
+### isIgnored
+
+Indicates whether the test is intended to be ignored. Ignored tests are skipped when tests are run, if known ahead of time, and any errors that might be encountered inside them are not recorded as test failures.
+
+**Value:** `true` when the test has been marked as ignored and `false` when it has not.
+
+### isSilent
+
+Indicates whether the test has been marked as silent.
+
+**Value:** `true` when the test has been marked as silent and `false` when it has not.
+
+### isVerbose
+
+Indicates whether the test has been marked as verbose.
+
+**Value:** `true` when the test has been marked as verbose and `false` when it has not.
+
+### isGroup
+
+Indicates whether this is a test group, as opposed to an individual test.
+
+**Value:** `true` when this `CanaryTest` instance represents a test group and `false` when it represents an individual test.
 
 ## Callback Class
 
