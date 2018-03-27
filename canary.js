@@ -534,7 +534,7 @@ class CanaryTest{
             }
             // Actually attempt the callback.
             try{
-                const result = callback.body.call(callback.owner, ...callbackArguments);
+                const result = callback.body.call(callback.owner, callback.owner, ...callbackArguments);
                 // If the callback returned a promise, then wait for it to resolve.
                 if(result instanceof Promise){
                     await result;
@@ -855,7 +855,8 @@ class CanaryTest{
                     return await this.abort();
                 }
                 // Handle the case where the function returned a promise
-                if(this.bodyReturnedValue instanceof Promise){
+                // But not for test groups!
+                if(this.bodyReturnedValue instanceof Promise && !this.isGroup){
                     // Wait for the promise to resolve
                     this.bodyReturnedValueResolved = await this.bodyReturnedValue;
                     // The promise may have explicitly aborted the test
