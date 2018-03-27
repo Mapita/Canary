@@ -524,7 +524,7 @@ class CanaryTest{
         for(let callback of callbackList){
             // Record an error when the callback is missing an implementation.
             if(!callback.body){
-                this.error(new Error("Callback has no implementation."), callback);
+                this.addError(new Error("Callback has no implementation."), callback);
             }
             // When the exitOnError flag is set, check that the test has not
             // entered any kind of error or abort state before going through
@@ -541,7 +541,7 @@ class CanaryTest{
                 }
             // Record any errors encountered while handling the callback.
             }catch(error){
-                this.error(error, callback);
+                this.addError(error, callback);
             }
         }
     }
@@ -559,7 +559,7 @@ class CanaryTest{
     // and the second argument is an optional location indicating where the
     // error was encountered, such as a CanaryTest instance or a
     // CanaryTestCallback instance.
-    error(error = undefined, location = undefined){
+    addError(error = undefined, location = undefined){
         if(error){
             this.log(red(`Encountered an error while running test "${this.name}":\n  ${error.message}`));
         }else{
@@ -584,7 +584,7 @@ class CanaryTest{
         // If the function arguments included an error and an optional location,
         // then add this information to the list of encountered errors.
         if(error){
-            this.error(error, location);
+            this.addError(error, location);
         }
         // Log a message stating that the test is being aborted.
         this.log(`Aborting test "${this.name}".`);
@@ -678,15 +678,15 @@ class CanaryTest{
     }
     // Orphan a child test, i.e. remove it from its parent.
     orphan(){
-        if(this.parent && this.parent.remove){
-            this.parent.remove(this);
+        if(this.parent && this.parent.removeTest){
+            this.parent.removeTest(this);
             return true;
         }
         this.parent = undefined;
         return false;
     }
     // Remove a child test.
-    remove(child){
+    removeTest(child){
         this.logVerbose(`Removing child test "${child.name}" from parent test "${this.name}".`);
         const index = this.children.indexOf(child);
         if(index >= 0){
@@ -696,7 +696,7 @@ class CanaryTest{
         return false;
     }
     // Add a Test instance as a child of this one.
-    add(child){
+    addTest(child){
         this.logVerbose(`Adding a child test "${child.name}" to parent "${this.name}".`);
         if(!this.isGroup){
             throw new Error("Tests can only be added as children to test groups.");
@@ -721,7 +721,7 @@ class CanaryTest{
         // Instantiate the CanaryTest object.
         const test = new CanaryTest(name, body);
         // Add it as a child of this test.
-        this.add(test);
+        this.addTest(test);
         // All done! Return the produced CanaryTest instance.
         return test;
     }
@@ -782,7 +782,7 @@ class CanaryTest{
                 child.expandGroups();
             }
         }catch(error){
-            this.error(error, this);
+            this.addError(error, this);
             this.attempted = true;
             this.aborted = true;
             this.startTime = this.getTime();
@@ -934,7 +934,7 @@ class CanaryTest{
                 return await this.abort(error, this);
             }catch(abortError){
                 try{
-                    this.error(abortError, this);
+                    this.addError(abortError, this);
                     this.success = false;
                     this.aborted = true;
                     this.endTime = this.getTime();
