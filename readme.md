@@ -4,6 +4,8 @@ Canary is a tool for writing and running automated tests in JavaScript code. It 
 
 Check out Canary's documentation at [canary.readthedocs.io](http://canary.readthedocs.io/).
 
+Install Canary using npm: `npm install canary-test`
+
 Canary lets you control where and how you write your tests, how they are run, and how their results are reported. In case you aren't worried about the specifics of your how your test runner functions and reports results, just as long as it works, Canary can also run tests and report results with one function call for sensible default behavior.
 
 Canary works best when used in combination with an assertion library such as [chai](http://www.chaijs.com/) or node's [assert](https://nodejs.org/api/assert.html) module.
