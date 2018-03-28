@@ -197,7 +197,7 @@ Group expansion is put off until tests are actually needed in order to make the 
 
 # reset
 
-Resets the test's state so that it is safe to run it again.
+Resets the test's state so that it is safe to run it again. This method resets tests recursively, so all tests that belong to a group will also be reset.
 
 **Examples:**
 
