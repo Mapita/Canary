@@ -856,6 +856,10 @@ class CanaryTest{
     // satisfied the filter, so that they will be skipped instead of run.
     applyFilter(filter){
         this.logVerbose(`Applying a filter function to test "${this.name}"...`);
+        // Expand groups if not already expanded
+        if(this.isGroup && !this.isExpandedGroup){
+            this.expandGroups();
+        }
         if(filter(this)){
             this.logVerbose(`Test "${this.name}" satisfied the filter.`);
             return true;
@@ -875,6 +879,14 @@ class CanaryTest{
                 this.logVerbose(`Test "${this.name}" did not satisfy the filter.`);
                 return false;
             }
+        }
+    }
+    // Reset filtering done via applyFilter.
+    resetFilter(){
+        this.logVerbose(`Resetting filtered state for test "${this.name}".`);
+        this.filtered = undefined;
+        for(let child of this.children){
+            child.resetFilter();
         }
     }
     // Run the test!
