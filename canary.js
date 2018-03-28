@@ -686,11 +686,11 @@ class CanaryTest{
     async doBeginCallbacks(){
         if(this.parent){
             this.logVerbose(`Executing parent's onEachBegin callbacks for test "${this.name}".`);
-            await this.runCallbacks(true, this.parent.onEachSuccessCallbacks);
+            await this.runCallbacks(true, this.parent.onEachBeginCallbacks);
         }
         if(this.noErrors() && !this.failed && !this.aborted){
             this.logVerbose(`Executing onBegin callbacks for test "${this.name}".`);
-            await this.runCallbacks(true, this.onSuccessCallbacks);
+            await this.runCallbacks(true, this.onBeginCallbacks);
         }
     }
     // Invoke onEnd and parent's onEachEnd callbacks.

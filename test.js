@@ -289,4 +289,38 @@ addTest(
     }
 );
 
+addTest(
+    async function testSuccessfulGroupCallbackOrder(){
+        // Set up the test
+        let counter = 0;
+        const testGroup = canary.group("Example test group", function(){
+            this.onBegin(function(){
+                assert(counter === 0);
+                counter++;
+            });
+            this.test("First example test", function(){
+                assert(counter === 1);
+                counter++;
+            });
+            this.test("Second example test", function(){
+                assert(counter === 2);
+                counter++;
+            });
+            this.onSuccess(function(){
+                assert(counter === 3);
+                counter++;
+            });
+            this.onEnd(function(){
+                assert(counter === 4);
+                counter++;
+            });
+        });
+        // Run canary
+        await canary.run();
+        // Verify correct results
+        assert(canary.success);
+        assert(counter === 5);
+    }
+);
+
 runTests();
