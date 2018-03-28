@@ -16,9 +16,9 @@ assert(canary instanceof canary.Test);
 
 The library also utilizes [`CanaryTestCallback`](api-callback-class.md) and [`CanaryTestError`](api-error-class.md) classes. These classes can be referred to with `canary.Callback` and `canary.Error`, respectively. These classes are mainly for internal use and, normally, it will not be necessary to work with them directly.
 
-# Methods and Attributes
+# List of Attributes
 
-Here is an exhaustive list of documented [`CanaryTest`](api-introduction.md) methods and attributes. Methods and attributes not documented here are liable to change often and without notice; it is not recommended to use undocumented functions or attributes.
+Here is an exhaustive list of documented [`CanaryTest`](api-introduction.md) methods and other attributes. Attributes not documented here are liable to change often and without notice; it is not recommended to rely on undocumented implementation details.
 
 - [abort](api-advanced-usage.md#abort)
 - [aborted](api-status-attributes.md#aborted)
