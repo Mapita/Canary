@@ -1217,6 +1217,9 @@ CanaryTest.Error = CanaryTestError;
 
 const canary = new CanaryTest("Canary");
 canary.isGroup = true;
+
+canary.Callback = CanaryTestCallback;
+canary.Error = CanaryTestError;
 canary.Test = CanaryTest;
 
 module.exports = canary;

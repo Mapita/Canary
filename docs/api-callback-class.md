@@ -1,4 +1,4 @@
-The `CanaryTestCallback` class is used to represent callbacks added to a test using methods such as `onBegin` and `onEnd`. It has a constructor and no methods.
+The `CanaryTestCallback` class is used to represent callbacks added to a test using methods such as `onBegin` and `onEnd`. It has a constructor and no methods. It can be accessed via `canary.Callback`.
 
 # getOwner
 

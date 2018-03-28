@@ -1,4 +1,4 @@
-The `CanaryTestError` class is used to record errors encountered while attempting tests using Canary.
+The `CanaryTestError` class is used to record errors encountered while attempting tests using Canary. It can be accessed via `canary.Error`.
 
 # stack
 
