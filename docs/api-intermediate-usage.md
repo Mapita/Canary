@@ -1,4 +1,4 @@
-These `CanaryTest` class methods may not be needed by users who are writing tests for smaller projects, but will prove valuable when writing tests for larger projects.
+These [`CanaryTest`](api-introduction.md) class methods may not be needed by users who are writing tests for smaller projects, but will prove valuable when writing tests for larger projects.
 
 # todo
 

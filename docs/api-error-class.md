@@ -1,14 +1,14 @@
-The `CanaryTestError` class is used to record errors encountered while attempting tests using Canary. It can be accessed via `canary.Error`.
+The [`CanaryTestError`](api-error-class.md) class is used to record errors encountered while attempting tests using Canary. It can be accessed via `canary.Error`.
 
 # stack
 
-A property to get the stack trace attribute of the error object that this `CanaryTestError` instance was instantiated with, provided such an attribute exists.
+A property to get the stack trace attribute of the error object that this [`CanaryTestError`](api-error-class.md) instance was instantiated with, provided such an attribute exists.
 
 **Value:** A stack trace, or `undefined` if none was found.
 
 # message
 
-A property to get the message attribute of the error object that this `CanaryTestError` instance was instantiated with, provided such an attribute exists.
+A property to get the message attribute of the error object that this [`CanaryTestError`](api-error-class.md) instance was instantiated with, provided such an attribute exists.
 
 **Value:** An error message, or `undefined` if none was found.
 

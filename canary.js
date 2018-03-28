@@ -84,8 +84,11 @@ class CanaryTest{
         // to false when the test was aborted.
         this.success = undefined;
         // This flag is set to false when the test was completed successfully and
-        // to true when the test was aborted.
+        // to true when the test was aborted prematurely due to an error.
         this.aborted = undefined;
+        // This flag is set to false when the test was completed successfully and
+        // to true when the test was found to have failed for any reason.
+        this.failed = undefined;
         // This flag is set when the test was skipped due to an unmet filter.
         this.filtered = undefined;
         // This flag can be set using the "todo" method. It indicates that the
@@ -104,6 +107,10 @@ class CanaryTest{
         // have any test code running immediately in their body, but instead
         // should only add child tests.
         this.isGroup = false;
+        // This flag indicates whether this is a test series. (Which is a
+        // special of test groups as far as he implementation is concerned.)
+        // A test series aborts at the first failure of a child test.
+        this.isSeries = false;
         // This flag is set after a test group was expanded; i.e. its body
         // function was evaluated.
         this.isExpandedGroup = false;
@@ -128,6 +135,8 @@ class CanaryTest{
         this.parent = undefined;
         // An array of child tests which have been added to this one.
         this.children = [];
+        // Will contain references to failed child tests.
+        this.failedChildren = [];
         // An array of onBegin callbacks.
         this.onBeginCallbacks = [];
         // An array of onEnd callbacks.
@@ -166,9 +175,11 @@ class CanaryTest{
         this.skipped = false;
         this.success = undefined;
         this.aborted = undefined;
+        this.failed = undefined;
         this.startTime = undefined;
         this.endTime = undefined;
         this.errors = [];
+        this.failedChildren = [];
         for(let child of this.children){
             child.reset();
         }
@@ -224,7 +235,11 @@ class CanaryTest{
         return this.parent;
     }
     // Get a list of child tests.
+    // If the group has not been expanded already, it will be expanded now.
     getChildren(){
+        if(this.isGroup && !this.isExpandedGroup){
+            this.expandGroups();
+        }
         return this.children;
     }
     // Get this test's tags as a dictionary object.
@@ -321,6 +336,18 @@ class CanaryTest{
     // to run this test.
     getErrors(){
         return this.errors;
+    }
+    // True when any child tests in a group have failed.
+    anyFailedChildren(){
+        return this.failedChildren && this.failedChildren.length;
+    }
+    // True when no child tests in a group have failed.
+    noFailedChildren(){
+        return !this.failedChildren || !this.failedChildren.length;
+    }
+    // Get a list of failed child tests.
+    getFailedChildren(){
+        return this.failedChildren;
     }
     // Helper function to get a string like "1st", "2nd", "3rd"...
     // Expects the input to be an integer.
@@ -563,11 +590,7 @@ class CanaryTest{
     async initialize(){
         this.logVerbose(`Initializing test "${this.name}...`);
         this.startTime = this.getTime();
-        this.endTime = undefined;
         this.attempted = true;
-        this.success = undefined;
-        this.aborted =  undefined;
-        this.errors = [];
     }
     // Report an error. The first argument is the error object that was thrown
     // and the second argument is an optional location indicating where the
@@ -584,16 +607,19 @@ class CanaryTest{
         this.success = false;
         return testError;
     }
-    async abort(error = undefined, location = undefined){
-        this.logVerbose(`Beginning to abort test "${this.name}".`);
-        // If the test was already aborted, then skip all of this.
+    // A failed test is one that was completed, but somehow ended up in an
+    // error state anyway. One example is a test group with failing child tests
+    // but with no issues with the test group itself.
+    async fail(error = undefined, location = undefined){
+        this.logVerbose(`Beginning to fail test "${this.name}"...`);
+        // If the test was already failed, then skip all of this.
         // This might happen if, for example, an onFailure, onEachFailure,
         // onEnd, or onEachEnd callback attempts to abort the test.
-        if(this.aborted){
+        if(this.failed){
             return;
         }
-        // Set aborted state.
-        this.aborted = true;
+        // Set failure state.
+        this.failed = true;
         this.success = false;
         // If the function arguments included an error and an optional location,
         // then add this information to the list of encountered errors.
@@ -601,7 +627,7 @@ class CanaryTest{
             this.addError(error, location);
         }
         // Log a message stating that the test is being aborted.
-        this.log(`Aborting test "${this.name}".`);
+        this.log(`Failing test "${this.name}".`);
         // Run onFailure and onEachFailure callbacks.
         await this.doFailureCallbacks();
         // Run onEnd and onEachEnd callbacks.
@@ -609,17 +635,32 @@ class CanaryTest{
         // All done! Mark the time.
         this.endTime = this.getTime();
     }
+    async abort(error = undefined, location = undefined){
+        this.logVerbose(`Beginning to abort test "${this.name}"...`);
+        if(!this.failed){
+            this.aborted = true;
+            return await this.fail(error, location);
+        }
+    }
+    async exitTestGroup(childTest){
+        this.logVerbose(`Beginning to exit test group "${this.name}" due to a failed child test.`);
+        if(!this.failed){
+            this.failedChildren.push(childTest);
+            return await this.abort();
+        }
+    }
     async complete(){
         this.logVerbose(`Beginning to set success state on test "${this.name}".`);
         // Set completion state.
         this.success = true;
+        this.failed = false;
         this.aborted = false;
         // Run onSuccess and onEachSuccess callbacks.
         if(this.noErrors()){
             this.doSuccessCallbacks();
         }
         // If there were any errors (probably caused by an onSuccess or
-        // onEachSuccess callback if encountered at this point) fail the test.
+        // onEachSuccess callback if encountered at this point) abort the test.
         if(this.anyErrors()){
             return await this.abort();
         }
@@ -630,10 +671,10 @@ class CanaryTest{
         // Wrapping up! Mark the time.
         this.endTime = this.getTime();
         // Check once again for errors, in this case probably caused by an onEnd
-        // or onEachEnd callback, and mark the test as aborted if any was
+        // or onEachEnd callback, and mark the test as failed if any was
         // encountered.
         if(this.anyErrors()){
-            this.aborted = true;
+            this.failed = true;
             this.success = false;
         // If no errors were encountered during this completion process, log a
         // message explaining that the test was completed.
@@ -655,13 +696,14 @@ class CanaryTest{
     }
     // Invoke onBegin callbacks.
     async doBeginCallbacks(){
-        this.logVerbose(`Executing onBegin callbacks for test "${this.name}".`);
-        await this.runCallbacks(true, this.onBeginCallbacks);
-    }
-    // Invoke parent's onEachBegin callbacks.
-    async doEachBeginCallbacks(){
-        this.logVerbose(`Executing parent's onEachBegin callbacks for test "${this.name}".`);
-        await this.runCallbacks(true, this.parent.onEachBeginCallbacks);
+        if(this.parent){
+            this.logVerbose(`Executing parent's onEachBegin callbacks for test "${this.name}".`);
+            await this.runCallbacks(true, this.parent.onEachSuccessCallbacks);
+        }
+        if(this.noErrors() && !this.failed && !this.aborted){
+            this.logVerbose(`Executing onBegin callbacks for test "${this.name}".`);
+            await this.runCallbacks(true, this.onSuccessCallbacks);
+        }
     }
     // Invoke onEnd and parent's onEachEnd callbacks.
     async doEndCallbacks(){
@@ -676,7 +718,7 @@ class CanaryTest{
     async doSuccessCallbacks(){
         this.logVerbose(`Executing onSuccess callbacks for test "${this.name}".`);
         await this.runCallbacks(true, this.onSuccessCallbacks);
-        if(this.parent && this.noErrors() && !this.aborted){
+        if(this.parent && this.noErrors() && !this.failed && !this.aborted){
             this.logVerbose(`Executing parent's onEachSuccess callbacks for test "${this.name}".`);
             await this.runCallbacks(true, this.parent.onEachSuccessCallbacks);
         }
@@ -756,6 +798,15 @@ class CanaryTest{
         const testGroup = this.test(name, body);
         testGroup.isGroup = true;
         return testGroup;
+    }
+    // Create a CanaryTest instance that is marked as a test series.
+    // Test groups should not have any test code that runs immediately in their
+    // body functions; instead they should rely only on adding callbacks and
+    // child tests. Their body functions should also be synchronous.
+    series(name, body){
+        const testSeries = this.group(name, body);
+        testSeries.isSeries = true;
+        return testSeries;
     }
     // Helper function to get the path to the file where a test was defined.
     getCallerLocation(){
@@ -843,34 +894,39 @@ class CanaryTest{
         try{
             this.logVerbose(`Beginning to run test "${this.name}".`);
             // Check if the test is supposed to be skipped, or if it has already
-            // been marked as aborted.
-            if(this.aborted){
-                return this.logVerbose("The test was already marked as aborted.");
-            }
+            // been marked as aborted or failed.
             if(this.shouldSkip()){
                 this.logVerbose("The test was marked to be skipped.");
                 return this.skip();
+            }else if(this.aborted || this.failed){
+                this.logVerbose("The test was already marked as failed.");
+                return;
+            }
+            // Check if this is a test group that hasn't been expanded yet.
+            // If not, then expand it now.
+            if(this.isGroup && !this.isExpandedGroup){
+                this.expandGroups();
             }
             // Prepare to run the test.
             await this.initialize();
-            // Handle parent's onEachBegin callbacks
-            if(this.parent){
-                await this.doEachBeginCallbacks();
-            }
-            if(this.aborted || this.anyErrors()){
+            // Handle onBegin and onEachBegin callbacks
+            await this.doBeginCallbacks();
+            // Check for errors produced by onBegin/onEachBegin
+            if(this.aborted || this.failed || this.anyErrors()){
                 this.logVerbose(
-                    "Aborting due to errors found after executing the " +
-                    "parent's onEachBegin callbacks."
+                    "Aborting due to errors found after executing onBegin " +
+                    "and onEachBegin callbacks"
                 );
                 return await this.abort();
             }
             // If the test has a body function, then evaluate it.
+            // (But not in the case of a group that was already expanded.)
             if(this.body && !this.isExpandedGroup){
                 // Run the body callback.
                 this.bodyReturnedValue = this.body(this);
                 // The body function may have explicitly aborted the test or
                 // added errors.
-                if(this.aborted || this.anyErrors()){
+                if(this.aborted || this.failed || this.anyErrors()){
                     this.logVerbose(
                         "Aborting due to errors found after evaluating " +
                         "the test's body function."
@@ -883,7 +939,7 @@ class CanaryTest{
                     // Wait for the promise to resolve
                     this.bodyReturnedValueResolved = await this.bodyReturnedValue;
                     // The promise may have explicitly aborted the test
-                    if(this.aborted || this.anyErrors()){
+                    if(this.aborted || this.failed || this.anyErrors()){
                         this.logVerbose(
                             "Aborting due to errors found after waiting " +
                             "for the promise returned by the test's body " +
@@ -891,6 +947,13 @@ class CanaryTest{
                         );
                         return await this.abort();
                     }
+                // Log a warning for test groups that returned a promise, since
+                // this is probably a mistake.
+                }if(this.bodyReturnedValue instanceof Promise && this.isGroup){
+                    this.logVerbose(
+                        `The body function of test group "${this.name}" ` +
+                        `returned a promise. This might be a mistake!`
+                    );
                 }
                 // Check if the test body set a flag indicating that this test
                 // and its children should be skipped.
@@ -902,19 +965,8 @@ class CanaryTest{
                     return this.skip();
                 }
             }
-            // Handle onBegin callbacks
-            if(this.noErrors() && !this.aborted){
-                await this.doBeginCallbacks();
-            }
-            if(this.aborted || this.anyErrors()){
-                this.logVerbose(
-                    "Aborting due to errors found after executing onBegin " +
-                    "callbacks."
-                );
-                return await this.abort();
-            }
             // Run child tests, if any.
-            if(this.children && this.children.length){
+            if(this.isGroup && this.children && this.children.length){
                 // Run the child tests in order, from first to last, waiting
                 // for each test to complete before attempting the next.
                 for(let child of this.children){
@@ -923,21 +975,25 @@ class CanaryTest{
                         await child.run();
                     }catch(error){
                         this.logVerbose(
-                            `Aborting due to errors encountered while running ` +
-                            `the child test "${child.name}".`
+                            `Aborting due to errors encountered while attempting ` +
+                            `to run the child test "${child.name}".`
                         );
                         return await this.abort(error, child);
                     }
-                    // Abort if the child test was aborted.
-                    if(child.aborted && !child.shouldSkip()){
-                        this.logVerbose(
-                            `Aborting because the child test "${child.name}" ` +
-                            `was aborted`
-                        );
-                        return await this.abort();
+                    // Handle a failed child test
+                    if((child.aborted || child.failed) && !child.shouldSkip()){
+                        if(this.isSeries){
+                            this.logVerbose(
+                                `Skipping remaining child tests because the ` +
+                                `child test "${child.name}" was aborted.`
+                            );
+                            return await this.exitTestGroup(child);
+                        }else{
+                            this.failedChildren.push(child);
+                        }
                     // The child may have explicitly aborted the parent test
                     // without having been itself aborted.
-                    }else if(this.aborted || this.anyErrors()){
+                    }else if(this.aborted || this.failed || this.anyErrors()){
                         this.logVerbose(
                             `Aborting due to errors found after running the ` +
                             `child test "${child.name}".`
@@ -946,12 +1002,21 @@ class CanaryTest{
                     }
                 }
             }
-            // Mark the test as complete and run onSuccess and onEnd callbacks
-            return await this.complete();
+            // If there were any failures, mark the test group as
+            // failed, too. A test series should have exited before now if
+            // a failed child test was the cause!
+            if(this.anyErrors() || this.anyFailedChildren()){
+                return await this.fail();
+            // Otherwise mark the test as complete and run onSuccess and onEnd
+            // callbacks
+            }else if(!this.aborted && !this.failed){
+                return await this.complete();
+            }
         }catch(error){
             // Mark the test as failed and run onFailure and onEnd callbacks
             this.logVerbose(
-                "Aborting due to an unhandled error encountered while running the test."
+                `Aborting due to an unhandled error encountered while ` +
+                `running test "${this.name}".`
             );
             try{
                 return await this.abort(error, this);
@@ -959,6 +1024,7 @@ class CanaryTest{
                 try{
                     this.addError(abortError, this);
                     this.success = false;
+                    this.failed = true;
                     this.aborted = true;
                     this.endTime = this.getTime();
                 }catch(addErrorError){
@@ -993,9 +1059,16 @@ class CanaryTest{
         }else if(this.anyErrors()){
             const error = this.errors.length === 1 ? "error" : "errors";
             text += red(`X ${this.name} (${this.errors.length} ${error})`);
-        // The test was aborted for some other reason, e.g. a failed child test.
+        // The test was aborted for some other reason
         }else if(this.aborted){
             text += red(`X ${this.name} (aborted)`);
+        // The test was failed for some other reason
+        }else if(this.failed){
+            text += red(`X ${this.name} (failed)`);
+        // The test has failed children but for some reason wasn't itself marked
+        // as failed. (This shouldn't happen!)
+        }else if(this.anyFailedChildren()){
+            text += red(`X ${this.name} (failed child test)`);
         // The test was skipped or ignored for some other reason, e.g. a failed
         // sibling test.
         }else if(this.skipped || !this.attempted){

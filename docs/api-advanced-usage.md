@@ -1,10 +1,26 @@
-These `CanaryTest` class methods are for those who need more complex or customized behavior from Canary. They are not relevant to the majority of users.
+These [`CanaryTest`](api-introduction.md) class methods are for those who need more complex or customized behavior from Canary. They are not relevant to the majority of users.
+
+# constructor
+
+The [`CanaryTest`](api-introduction.md) class constructor can be used to instantiate a test object with a given name and body function. Usually, test objects should be instantiated indirectly using the [`test`](api-adding-tests.md#test), [`group`](api-adding-tests.md#group), and [`series`](api-adding-tests.md#series) methods.
+
+**Arguments:** `({string} name, {function} body)`
+
+**Returns:** The new [`CanaryTest`](api-introduction.md) instance.
+
+**Examples:**
+
+``` js
+const test = new canary.Test("Example test", function(){
+    assert(true);
+});
+```
 
 # silent
 
 Set a test and all its children to run silently. This means that they will not output any log messages.
 
-The `log` method of a `CanaryTest` instance can be used to log a message only if the test has not been set to run silently.
+The `log` method of a [`CanaryTest`](api-introduction.md) instance can be used to log a message only if the test has not been set to run silently.
 
 Note that when the `concise` flag of the `doReport` function is set, it will cause all tests to run silently.
 
@@ -20,7 +36,7 @@ canary.test("Example silent test", function(){
 
 Set a test and all its children to run verbosely. This means they will output even more detailed logs than usual.
 
-The `logVerbose` method of a `CanaryTest` instance can be used to log a message only when the test is set to run verbosely.
+The `logVerbose` method of a [`CanaryTest`](api-introduction.md) instance can be used to log a message only when the test is set to run verbosely.
 
 Note that when the `verbose` flag of the `doReport` function is set, it will cause all tests to run verbosely that were not otherwise set to run silently.
 
@@ -79,9 +95,9 @@ Get a list of tags that have been added to this test.
 
 # getTestTotal
 
-Recursively get the number of `CanaryTest` instances in a test tree.
+Recursively get the number of [`CanaryTest`](api-introduction.md) instances in a test tree.
 
-Note that if this method is called for a test group, and the group has not already been expanded, then this method will cause it to be expanded. (As though the `expandGroups` method was called.)
+Note that if this method is called for a test group or series, and the group has not already been expanded, then this method will cause it to be expanded. (As though the `expandGroups` method was called.)
 
 **Returns:** The total number of tests in this test tree.
 
@@ -107,17 +123,29 @@ Get the length of time taken to run this test, in milliseconds.
 
 Add an error to the test's list of recorded errors.
 
-The method requires an Error object and optionally accepts another argument indicating the test or callback where the error occurred.
+The method requires an [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object and optionally accepts another argument indicating the test or callback where the error occurred.
 
 **Arguments:** `({Error} error, {CanaryTest|CanaryTestCalback} location)`
 
-**Returns:** The newly-created `CanaryTestError` instance.
+**Returns:** The newly-created [`CanaryTestError`](api-error-class.md) instance.
 
 # abort
 
 Abort the test and mark it as failed.
 
-The method optionally accepts information about the error that resulted in the test being aborted. The first argument, if provided, must be an Error object, and the second argument can be used to indicate the test or callback where the error occured. (This is the same as with the `error` method.)
+[`onFailure`](api-group-callbacks.md#onfailure), [`onEachFailure`](api-group-callbacks.md#oneachfailure), [`onEnd`](api-group-callbacks.md#onend), and [`onEachEnd`](api-group-callbacks.md#oneachend) callbacks will be executed upon calling this method.
+
+The method optionally accepts information about the error that resulted in the test being aborted. The first argument, if provided, must be an [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object, and the second argument can be used to indicate the test or callback where the error occured. (This is the same as with the [`addError`](api-advanced-usage.md#adderror) method.)
+
+**Arguments:** `({Error} error, {CanaryTest|CanaryTestCalback} location)`
+
+# fail
+
+Abort the test as failed, though not as aborted.
+
+This method should only be called as the test is completed, since it immediately executes any [`onFailure`](api-group-callbacks.md#onfailure), [`onEachFailure`](api-group-callbacks.md#oneachfailure), [`onEnd`](api-group-callbacks.md#onend), and [`onEachEnd`](api-group-callbacks.md#oneachend) callbacks.
+
+The method optionally accepts information about the error that caused the test to fail. The first argument, if provided, must be an [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object, and the second argument can be used to indicate the test or callback where the error occured. (This is the same as with the [`addError`](api-advanced-usage.md#adderror) method.)
 
 **Arguments:** `({Error} error, {CanaryTest|CanaryTestCalback} location)`
 
@@ -137,7 +165,31 @@ Get whether this test was run without encountering any errors.
 
 Get a list of errors that were encountered while attempting this test, if any.
 
-**Returns:** An array of `CanaryTestError` objects encountered while running this test.
+**Returns:** An array of [`CanaryTestError`](api-error-class.md) objects encountered while running this test.
+
+# anyFailedChildren
+
+Get whether any child tests of a test group or series failed.
+
+**Returns:** `true` when any child tests have failed and `false` otherwise.
+
+If this method is called for an individual test rather than for a test group, then the return value will always be `false`.
+
+# noFailedChildren
+
+Get whether none of the child tests of a test group or series have been marked as failed.
+
+**Returns:** `true` when no child tests have failed and `false` when any have failed.
+
+If this method is called for an individual test rather than for a test group, then the return value will always be `true`.
+
+# getFailedChildren
+
+Get a list of child tests that have failed, if any.
+
+**Returns:** An array of [`CanaryTest`](api-introduction.md) objects representing the failed child tests.
+
+If this method is called for an individual test rather than for a test group, then the returned array will always be empty.
 
 # addTest
 
@@ -161,6 +213,19 @@ Remove all child tests from a parent group.
 
 **Arguments:** `({CanaryTest} test)`
 
+**Examples:**
+
+``` js
+const someGroup = canary.group("Example test group", function(){
+    this.test("Example test", function(){
+        assert(true);
+    });
+});
+assert(someGroup.getChildren().length === 1);
+someGroup.removeAllTests();
+assert(someGroup.getChildren().length === 0);
+```
+
 # orphan
 
 Remove a test from its parent group.
@@ -169,15 +234,17 @@ Remove a test from its parent group.
 
 # getParent
 
-Get the `CanaryTest` instance which is the parent of this one.
+Get the [`CanaryTest`](api-introduction.md) instance which is the parent of this one.
 
-**Returns:** The `CanaryTest` instance to which this test has been added, or `undefined` if the test does not have a parent.
+**Returns:** The [`CanaryTest`](api-introduction.md) instance to which this test has been added, or `undefined` if the test does not have a parent.
 
 # getChildren
 
 Get a list of the tests that are children of this test group.
 
-**Returns:** An array of `CanaryTest` instances which are children of this test group.
+Note that if this method is called for a test group or series, and the group has not already been expanded, then this method will cause it to be expanded. (As though the `expandGroups` method was called.)
+
+**Returns:** An array of [`CanaryTest`](api-introduction.md) instances which are children of this test group.
 
 # applyFilter
 
@@ -194,6 +261,23 @@ This method is leveraged by `doReport` in order to enforce the filtering criteri
 Recursively run all the body functions assigned to test groups, but not to ordinary tests. This has the effect of elaborating the structure of the test tree without actually running tests.
 
 Group expansion is put off until tests are actually needed in order to make the startup performance impact of including tests in an application source file close to nonexistent, even in the case of testing code errors that could potentially cause hangups, since extremely little work is done at the time of declaration.
+
+**Examples:**
+
+``` js
+const someGroup = canary.group("Example test group", function(){
+    canary.test("Example test", function(){
+        assert("hello" === "hello");
+    });
+});
+// Test groups are not expanded upon declaration, meaning that Canary
+// doesn't know about someGroup's children yet.
+assert(someGroup.getChildren().length === 0);
+// After a call to expandGroups, Canary will have knowledge of the
+// structure of the test tree.
+canary.expandGroups();
+assert(someGroup.getChildren().length === 1);
+```
 
 # reset
 

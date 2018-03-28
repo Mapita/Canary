@@ -1,8 +1,8 @@
-These are attributes of every `CanaryTest` instance that indicate test status. In general, it should not be necessary to access these attributes explicitly. It is not recommended that these attributes be overwritten.
+These are attributes of every [`CanaryTest`](api-introduction.md) instance that indicate test status. In general, it should not be necessary to access these attributes explicitly. It is not recommended that these attributes be overwritten.
 
 # aborted
 
-Indicates whether the test has been aborted.
+Indicates whether the test has been aborted. All aborted tests were also failed, but not all failed tests were aborted. When a test is marked as aborted, it implies that the failure cause the test to be terminated before it was fully completed.
 
 **Value:** `true` when the the test has been aborted and `false` when it has not.
 
@@ -11,6 +11,12 @@ Indicates whether the test has been aborted.
 Indicates whether the test has been or is being attempted.
 
 **Value:** `true` when the test was or is being attempted and `false` when it was not.
+
+# failed
+
+Indicates whether the test was failed. This could be because of an error encountered while running the test's body function, an error encountered while attempting to execute a callback, or due to a failed child test.
+
+**Value:** `true` when the the test was failed and `false` when it was not.
 
 # skipped
 
@@ -70,7 +76,43 @@ Indicates whether the test has been marked as verbose.
 
 # isGroup
 
-Indicates whether this is a test group, as opposed to an individual test.
+Indicates whether this is a test group, as opposed to an individual test. This flag is set for both test series and normal test groups.
 
-**Value:** `true` when this `CanaryTest` instance represents a test group and `false` when it represents an individual test.
+**Value:** `true` when this [`CanaryTest`](api-introduction.md) instance represents a test group and `false` when it represents an individual test.
+
+# isSeries
+
+Indicates whether this is a test series, as opposed to an individual test or a normal test group.
+
+**Value:** `true` when this [`CanaryTest`](api-introduction.md) instance represents a test series and `false` when it does not.
+
+**Examples:**
+
+``` js
+const someTest = canary.test("Example test", function(){
+    assert(1 + 1 === 2);
+});
+// Not a test series
+assert(!someTest.isSeries);
+```
+
+``` js
+const someGroup = canary.group("Example test group", function(){
+    canary.test("Example test", function(){
+        assert(2 + 2 === 4);
+    });
+});
+// Not a test series
+assert(!someGroup.isSeries);
+```
+
+``` js
+const someSeries = canary.series("Example test series", function(){
+    canary.test("Example test", function(){
+        assert(2 + 2 === 4);
+    });
+});
+// This is in fact a test series
+assert(someGroup.isSeries);
+```
 
