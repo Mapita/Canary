@@ -1121,6 +1121,9 @@ class CanaryTest{
     // Optional attributes for the optional options argument:
     // concise: Report only a small amount of information regarding the test
     //   process and its results, and set all tests to run silently.
+    // silent: Report no information at all regarding the test process.
+    //   When keepAlive is not set, the process exit status code can be used
+    //   to see whether the test was successful or not.
     // verbose: Report a great deal of information regarding the test process
     //   and set all tests to run verbosely.
     // keepAlive: Don't terminate the process after running tests and reporting
@@ -1140,15 +1143,20 @@ class CanaryTest{
         try{
             // Set a default empty options object when none was specified.
             options = options || {};
+            function log(...message){
+                if(!options.silent){
+                    console.log(...message);
+                }
+            }
             // Indicate that tests are about to be run!
-            console.log(`Running tests via Canary...`);
+            log(`Running tests via Canary...`);
             // When "concise" is set, instruct tests to run silently.
             if(options.concise){
                 this.silent();
             }else if(options.verbose){
                 this.verbose();
             }
-            // Expand groups so that filters can be accurately applied.
+            // Expand test groups
             this.expandGroups();
             // Construct a list of filter functions. Only run tests which
             // satisfy at least one of these filters, or whose parent satisifies
@@ -1156,19 +1164,19 @@ class CanaryTest{
             const filters = [];
             // Heed an explicitly defined filter function
             if(options.filter){
-                console.log("Filtering tests by a provided filter function.");
+                log("Filtering tests by a provided filter function.");
                 filters.push(options.filter);
             }
             // When "names" is set, run tests with a fitting name, or that are
             // a child of a test with such a name.
             if(options.names){
-                console.log(`Filtering tests by name: "${options.names.join(`", "`)}"`),
+                log(`Filtering tests by name: "${options.names.join(`", "`)}"`),
                 filters.push(test => options.names.indexOf(test.name) >= 0);
             }
             // When "tags" is set, run tests with one of the given tags, or
             // that are a descendant of such a test.
             if(options.tags){
-                console.log(`Filtering tests by tags: "${options.tags.join(`", "`)}"`);
+                log(`Filtering tests by tags: "${options.tags.join(`", "`)}"`);
                 filters.push(test => {
                     for(let tag of options.tags){
                         if(test.tagDictionary[tag]){
@@ -1184,10 +1192,10 @@ class CanaryTest{
                 const paths = options.paths.map(
                     path => this.normalizePath(path)
                 );
-                console.log(`Filtering tests by file paths: "${paths.join(`", "`)}"`);
+                log(`Filtering tests by file paths: "${paths.join(`", "`)}"`);
                 filters.push(test => {
                     for(let path of paths){
-                        console.log(test.filePath);
+                        log(test.filePath);
                         if(test.filePath && test.filePath.startsWith(path)){
                             return true;
                         }
@@ -1216,43 +1224,43 @@ class CanaryTest{
                 report.passed.length + report.failed.length + report.skipped.length
             );
             // Log information about test status.
-            console.log(`Finished running ${totalTests} tests.`);
+            log(`Finished running ${totalTests} tests.`);
             if(report.errors.length === 1){
-                console.log(red("Encountered 1 error."));
+                log(red("Encountered 1 error."));
             }else if(report.errors.length){
-                console.log(red(`Encountered ${report.errors.length} errors.`));
+                log(red(`Encountered ${report.errors.length} errors.`));
             }
             if(!options.concise){
                 this.logVerbose("Getting a text summary...");
-                console.log(this.getSummary());
+                log(this.getSummary());
                 this.logVerbose("Showing all errors...");
                 for(let error of report.errors){
                     const title = error.getLocationTitle();
                     if(title){
-                        console.log(red(`Error at "${title}": ${error.stack}`));
+                        log(red(`Error at "${title}": ${error.stack}`));
                     }else{
-                        console.log(red(`Error: ${error.stack}`));
+                        log(red(`Error: ${error.stack}`));
                     }
                 }
             }
             if(report.passed.length === totalTests){
-                console.log(green(`${totalTests} of ${totalTests} tests passed.`));
+                log(green(`${totalTests} of ${totalTests} tests passed.`));
             }else{
-                console.log(`${report.passed.length} of ${totalTests} tests ${green("passed")}.`);
+                log(`${report.passed.length} of ${totalTests} tests ${green("passed")}.`);
             }
             if(report.skipped.length){
-                console.log(`${report.skipped.length} of ${totalTests} tests ${yellow("skipped")}.`);
+                log(`${report.skipped.length} of ${totalTests} tests ${yellow("skipped")}.`);
             }
             if(report.failed.length){
-                console.log(`${report.failed.length} of ${totalTests} tests ${red("failed")}.`);
-                console.log(red("Status: Failed"));
+                log(`${report.failed.length} of ${totalTests} tests ${red("failed")}.`);
+                log(red("Status: Failed"));
                 if(!options.keepAlive){
                     // Since there were any failed tests, exit with a nonzero status code.
                     this.logVerbose("Some tests failed: Exiting with a nonzero status code.");
                     process.exit(1);
                 }
             }else{
-                console.log(green("Status: OK"));
+                log(green("Status: OK"));
                 if(!options.keepAlive){
                     // Since there were no failed tests, exit with a zero status code.
                     this.logVerbose("Tests ran without errors: Exiting with a zero status code.");
@@ -1261,9 +1269,9 @@ class CanaryTest{
             }
         }catch(error){
             // Report an unhandled error and exit with a nonzero status code.
-            console.log(red("Encountered an unhandled error while running tests."));
-            console.log(red(error.stack));
-            console.log(red("Status: Failed"));
+            log(red("Encountered an unhandled error while running tests."));
+            log(red(error.stack));
+            log(red("Status: Failed"));
             if(!options.keepAlive){
                 this.logVerbose("Test runner failed: Exiting with a nonzero status code.");
                 process.exit(1);

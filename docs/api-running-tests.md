@@ -9,6 +9,7 @@ A single, one-size-fits-most call to run tests, output a report to the console, 
 These are the attributes of the options object which the `doReport` function will consider:
 
 - `{boolean} concise`: Log only a small of information regarding testing and the results.
+- `{boolean} silent`: Log no information whatsoever about tests or their results. If the `keepAlive` flag was not set, the process will still exit with an appropriate status code to indicate success or failure.
 - `{boolean} verbose`: Log a great deal of information while running tests.
 - `{boolean} keepAlive`: Normally, the process is terminated with a zero status code after running all tests successfully or a nonzero status code after running tests with any errors. When this flag is specified, `doReport` will not terminate the process.
 - `{function} filter`: A function which accepts a [`CanaryTest`](api-introduction.md) instance and returns a truthy value when the test should be run and a falsey value when the test should be skipped.
