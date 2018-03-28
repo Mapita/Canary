@@ -188,4 +188,105 @@ addTest(
     }
 );
 
+addTest(
+    async function doReportFilteringBehavior(){
+        // Set up the test
+        const passingTest = canary.test("Passing test", function(){
+            // do nothing
+        });
+        const taggedTestGroup = canary.group("Tagged test group", function(){
+            this.tags("exampleTag");
+        });
+        const untaggedTestGroup = canary.group("Untagged test group", function(){
+            // do nothing
+        });
+        const failingTest = canary.test("Failing test", function(){
+            // Incidentally, if doReport erroneously terminates the process
+            // this test should cause it to still exit with a nonzero status code
+            // and let CI or whatever know that something went wrong
+            throw new Error("Test failed");
+        });
+        // Apply tag to failingTest test
+        failingTest.tags("exampleTag");
+        // Run canary, filtering by tags
+        await canary.doReport({
+            keepAlive: true,
+            silent: true,
+            tags: ["exampleTag"],
+        });
+        assert(!passingTest.attempted);
+        assert(taggedTestGroup.success);
+        assert(!untaggedTestGroup.attempted);
+        assert(failingTest.failed);
+        canary.reset();
+        canary.resetFilter();
+        // Run again, filtering by name
+        await canary.doReport({
+            keepAlive: true,
+            silent: true,
+            names: ["Passing test", "Untagged test group", "Failing test"],
+        });
+        assert(passingTest.success);
+        assert(!taggedTestGroup.attempted);
+        assert(untaggedTestGroup.success);
+        assert(failingTest.failed);
+        canary.reset();
+        canary.resetFilter();
+        // Run again, filtering by file path
+        // Since all these tests are in the same file, all should run!
+        await canary.doReport({
+            keepAlive: true,
+            silent: true,
+            paths: [__dirname],
+        });
+        assert(passingTest.success);
+        assert(taggedTestGroup.success);
+        assert(untaggedTestGroup.success);
+        assert(failingTest.failed);
+        canary.reset();
+        canary.resetFilter();
+        // Run again, filtering by a different file path
+        // Since none of the tests are in this file path, none should run.
+        await canary.doReport({
+            keepAlive: true,
+            silent: true,
+            paths: ["/not/a/valid/file:path@$!?"],
+        });
+        assert(!passingTest.attempted);
+        assert(!taggedTestGroup.attempted);
+        assert(!untaggedTestGroup.attempted);
+        assert(!failingTest.attempted);
+        canary.reset();
+        canary.resetFilter();
+        // Run again, filtering using a given predicate function
+        await canary.doReport({
+            keepAlive: true,
+            silent: true,
+            filter: test => test === untaggedTestGroup || test === failingTest,
+        });
+        assert(!passingTest.attempted);
+        assert(!taggedTestGroup.attempted);
+        assert(untaggedTestGroup.success);
+        assert(failingTest.failed);
+        canary.reset();
+        canary.resetFilter();
+        // And once more, using all the filters
+        // They should be combined like an OR operation to run all tests
+        await canary.doReport({
+            keepAlive: true,
+            silent: true,
+            tags: ["exampleTag"],
+            names: ["Passing test"],
+            paths: ["/not/a/valid/file:path@$!?"],
+            filter: test => test === untaggedTestGroup,
+        });
+        assert(passingTest.success);
+        assert(taggedTestGroup.success);
+        assert(untaggedTestGroup.success);
+        assert(failingTest.failed);
+        canary.reset();
+        canary.resetFilter();
+    }
+);
+
 runTests();
