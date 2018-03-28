@@ -155,6 +155,12 @@ Remove a child test from a parent group.
 
 **Returns:** `true` if the test was in fact a child and was removed and `false` if it was not.
 
+# removeAllTests
+
+Remove all child tests from a parent group.
+
+**Arguments:** `({CanaryTest} test)`
+
 # orphan
 
 Remove a test from its parent group.

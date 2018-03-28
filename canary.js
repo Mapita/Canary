@@ -690,10 +690,19 @@ class CanaryTest{
         this.logVerbose(`Removing child test "${child.name}" from parent test "${this.name}".`);
         const index = this.children.indexOf(child);
         if(index >= 0){
+            this.children[index].parent = undefined;
             this.children.splice(index, 1);
             return true;
         }
         return false;
+    }
+    // Remove all child tests.
+    removeAllTests(){
+        this.logVerbose(`Removing all child tests from "${this.name}".`);
+        for(let child of this.children){
+            child.parent = undefined;
+        }
+        this.children = [];
     }
     // Add a Test instance as a child of this one.
     addTest(child){
