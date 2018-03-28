@@ -195,3 +195,29 @@ Recursively run all the body functions assigned to test groups, but not to ordin
 
 Group expansion is put off until tests are actually needed in order to make the startup performance impact of including tests in an application source file close to nonexistent, even in the case of testing code errors that could potentially cause hangups, since extremely little work is done at the time of declaration.
 
+# reset
+
+Resets the test's state so that it is safe to run it again.
+
+**Examples:**
+
+``` js
+const someTest = canary.test("Example test", function(){
+    assert(1 + 1 === 2);
+});
+// Run the test once
+canary.run().then(() => {
+    // Verify its success state
+    assert(someTest.attempted);
+    assert(someTest.success);
+    // Reset it
+    someTest.reset();
+    assert(!someTest.attempted);
+    assert(!someTest.success);
+    // Run it again
+    canary.run().then(() => {
+        assert(someTest.attempted);
+        assert(someTest.success);
+    });
+});
+```

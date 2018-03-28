@@ -159,6 +159,16 @@ class CanaryTest{
             this.columnInLine = undefined;
         }
     }
+    // Reset the state of the test so that it is safe to run it again.
+    reset(){
+        this.attempted = false;
+        this.skipped = false;
+        this.success = undefined;
+        this.aborted = undefined;
+        this.startTime = undefined;
+        this.endTime = undefined;
+        this.errors = [];
+    }
     // Mark the test and all its children as "TODO". These tests will not be
     // attempted.
     todo(){
