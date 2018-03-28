@@ -1,7 +1,6 @@
 # Canary
 
-[![Travis CI status badge](https://travis-ci.org/Mapita/Canary)](https://travis-ci.org/Mapita/Canary.svg?branch=master)
-[![readthedocs documentation status badge](http://canary.readthedocs.io/en/stable/)](https://readthedocs.org/projects/canary/badge/?version=latest)
+[![Build Status](https://travis-ci.org/Mapita/Canary.svg?branch=master)](https://travis-ci.org/Mapita/Canary) [![Documentation Status](https://readthedocs.org/projects/canary/badge/?version=latest)](http://canary.readthedocs.io/en/latest/?badge=latest)
 
 Canary is a tool for writing and running automated tests in JavaScript code. It was written with tests and implementation sharing the same file foremost in mind. When tests and implementation are close together, it's more difficult to forget or ignore tests when making changes to the implementation.
 
