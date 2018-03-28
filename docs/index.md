@@ -1,6 +1,6 @@
 Canary is a tool for writing and running automated tests in JavaScript code.
 
-[https://github.com/mapita/canary](https://github.com/mapita/canary)
+It can be found on github at [github.com/mapita/canary](https://github.com/mapita/canary).
 
 ## Installation
 

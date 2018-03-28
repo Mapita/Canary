@@ -24,5 +24,5 @@ items.sort((a, b) => {
 });
 
 for(let item of items){
-    console.log(`- [\`${item.name}\`](${item.file}#${item.name.toLowerCase()})`);
+    console.log(`- [${item.name}](${item.file}#${item.name.toLowerCase()})`);
 }

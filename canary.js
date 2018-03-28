@@ -275,18 +275,6 @@ class CanaryTest{
     getName(){
         return this.name;
     }
-    // Get the number of tests in this tree; i.e. this test, more the number of
-    // children, more the number of grandchildren, etc.
-    getTestTotal(){
-        if(!this.isExpandedGroup){
-            this.expandGroups();
-        }
-        let count = 1;
-        for(let child of this.children){
-            count += child.getTestTotal(testFilter);
-        }
-        return count;
-    }
     // Log a message. (Except if the test was marked as silent.)
     log(...message){
         if(!this.isSilent){

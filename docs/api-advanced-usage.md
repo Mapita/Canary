@@ -93,14 +93,6 @@ Get a list of tags that have been added to this test.
 
 **Returns:** An array of tags.
 
-# getTestTotal
-
-Recursively get the number of [`CanaryTest`](api-introduction.md) instances in a test tree.
-
-Note that if this method is called for a test group or series, and the group has not already been expanded, then this method will cause it to be expanded. (As though the `expandGroups` method was called.)
-
-**Returns:** The total number of tests in this test tree.
-
 # getStatusString
 
 Get a string representing the status of this test.
