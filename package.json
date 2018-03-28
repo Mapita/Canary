@@ -32,5 +32,8 @@
       "name": "Timo Rüppell",
       "email": "timo.ruppell@mapita.fi"
     }
-  ]
+  ],
+  "scripts": {
+    "test": "node test.js"
+  }
 }
