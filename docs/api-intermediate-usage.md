@@ -1,4 +1,4 @@
-These [`CanaryTest`](api-introduction.md) class methods may not be needed by users who are writing tests for smaller projects, but will prove valuable when writing tests for larger projects.
+These [**CanaryTest**](api-introduction.md) class methods may not be needed by users who are writing tests for smaller projects, but will prove valuable when writing tests for larger projects.
 
 # todo
 
@@ -64,7 +64,7 @@ Log a message to the console, except for if this test has been set to run silent
 
 **Arguments:** `(...{anything} message)`
 
-The arguments to the function are stringified and concatenated into a single string, with the different parts separated by spaces. (Just like `console.log`.)
+The arguments to the function are treated the same as with [**console.log**](https://developer.mozilla.org/en-US/docs/Web/API/Console/log).
 
 **Examples:**
 
@@ -80,7 +80,7 @@ Log a message to the console, but only if this test has been set to run verbosel
 
 **Arguments:** `(...{anything} message)`
 
-The arguments to the function are stringified and concatenated into a single string, with the different parts separated by spaces. (Just like `console.log`.)
+The arguments to the function are treated the same as with [**console.log**](https://developer.mozilla.org/en-US/docs/Web/API/Console/log).
 
 **Examples:**
 

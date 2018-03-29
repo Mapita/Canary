@@ -1,10 +1,12 @@
-The [`CanaryTestCallback`](api-callback-class.md) class is used to represent callbacks added to a test using methods such as [`onBegin`](api-group-callbacks.md#onbegin) and [`onEnd`](api-group-callbacks.md#onend). It has a constructor and no methods. It can be accessed via `canary.Callback`.
+The [**CanaryTestCallback**](api-callback-class.md) class is used to represent callbacks added to a test using methods such as [**onBegin**](api-group-callbacks.md#onbegin) and [**onEnd**](api-group-callbacks.md#onend). It has a constructor and no methods. It can be accessed via [**canary.Callback**](api-callback-class.md).
+
+This class is primarily for internal usage by Canary. It should rarely if ever be necessary for user code to reference or interact with this class.
 
 # getOwner
 
 Get the test object to which this callback belongs.
 
-**Returns:** The [`CanaryTest`](api-introduction.md) instance to which this callback was added.
+**Returns:** The [**CanaryTest**](api-introduction.md) instance to which this callback was added.
 
 # getName
 

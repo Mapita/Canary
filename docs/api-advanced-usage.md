@@ -1,12 +1,12 @@
-These [`CanaryTest`](api-introduction.md) class methods are for those who need more complex or customized behavior from Canary. They are not relevant to the majority of users.
+These [**CanaryTest**](api-introduction.md) class methods are for those who need more complex or customized behavior from Canary. They are not relevant to the majority of users.
 
 # constructor
 
-The [`CanaryTest`](api-introduction.md) class constructor can be used to instantiate a test object with a given name and body function. Usually, test objects should be instantiated indirectly using the [`test`](api-adding-tests.md#test), [`group`](api-adding-tests.md#group), and [`series`](api-adding-tests.md#series) methods.
+The [**CanaryTest**](api-introduction.md) class constructor can be used to instantiate a test object with a given name and body function. Usually, test objects should be instantiated indirectly using the [**test**](api-adding-tests.md#test), [**group**](api-adding-tests.md#group), and [**series**](api-adding-tests.md#series) methods.
 
 **Arguments:** `({string} name, {function} body)`
 
-**Returns:** The new [`CanaryTest`](api-introduction.md) instance.
+**Returns:** The new [**CanaryTest**](api-introduction.md) instance.
 
 **Examples:**
 
@@ -20,9 +20,9 @@ const test = new canary.Test("Example test", function(){
 
 Set a test and all its children to run silently. This means that they will not output any log messages.
 
-The `log` method of a [`CanaryTest`](api-introduction.md) instance can be used to log a message only if the test has not been set to run silently.
+The [**log**](api-intermediate-usage.md#log) method of a [**CanaryTest**](api-introduction.md) instance can be used to log a message only if the test has not been set to run silently.
 
-Note that when the `concise` flag of the `doReport` function is set, it will cause all tests to run silently.
+Note that when the **concise** flag of the [**doReport**](api-running-tests.md#doreport) function is set, it will cause all tests to run silently.
 
 **Examples:**
 
@@ -36,11 +36,11 @@ canary.test("Example silent test", function(){
 
 Set a test and all its children to run verbosely. This means they will output even more detailed logs than usual.
 
-The `logVerbose` method of a [`CanaryTest`](api-introduction.md) instance can be used to log a message only when the test is set to run verbosely.
+The [**logVerbose**](api-intermediate-usage.md#logverbose) method of a [**CanaryTest**](api-introduction.md) instance can be used to log a message only when the test is set to run verbosely.
 
-Note that when the `verbose` flag of the `doReport` function is set, it will cause all tests to run verbosely that were not otherwise set to run silently.
+Note that when the **verbose** flag of the [**doReport**](api-running-tests.md#doreport) function is set, it will cause all tests to run verbosely that were not otherwise set to run silently.
 
-Marking a test as verbose will also mark it as not silent, overriding any previous calls to [`silent`](api-advanced-usage.md#silent).
+Marking a test as verbose will also mark it as not silent, overriding any previous calls to [**silent**](api-advanced-usage.md#silent).
 
 **Examples:**
 
@@ -49,12 +49,6 @@ canary.test("Example verbose test", function(){
     this.verbose();
 });
 ```
-
-# shouldSkip
-
-Check whether any flags have been set that will cause this test to be skipped, such as by using the `todo` or `ignore` methods.
-
-**Returns:** `true` is marked to be skipped `false` when it is not so marked.
 
 # unignore
 
@@ -67,6 +61,26 @@ const someTest = canary.test("Example test", function(){
     this.ignore();
 });
 someTest.unignore(); // Nevermind!
+```
+
+# shouldSkip
+
+Check whether any flags have been set that will cause this test to be skipped, such as by using the [**todo**](api-intermediate-usage.md#todo) or [**ignore**](api-intermediate-usage.md#ignore) methods.
+
+**Returns:** **true** is marked to be skipped **false** when it is not so marked.
+
+**Examples:**
+
+``` js
+const someTest = canary.test("Example test", function(){
+    assert(1 === 1);
+});
+// Test is currently normal and isn't marked to be skipped
+assert(!someTest.shouldSkip());
+// Mark it as ignored
+someTest.ignore();
+// Now the test should in fact be skipped
+assert(someTest.shouldSkip());
 ```
 
 # getTitle
@@ -87,7 +101,20 @@ Determine whether this test has a certain tag or not.
 
 **Arguments:** `({string} tag)`
 
-**Returns:** `true` when the test has the tag and `false` when it does not.
+**Returns:** **true** when the test has the tag and **false** when it does not.
+
+**Examples:**
+
+``` js
+const someTest = canary.test("Example test", function(){
+    assert(1 === 1);
+});
+// Add some tags to the test
+someTest.tags("hello", "world");
+// Check for the presence of tags
+assert(someTest.hasTag("hello"));
+assert(!someTest.hasTag("not an actual tag"));
+```
 
 # getTags
 
@@ -105,31 +132,31 @@ Get a string representing the status of this test.
 
 Get the length of time taken to run this test, in seconds.
 
-**Returns:** The number of seconds it took to run the test, or `undefined` if the test has not yet been completed.
+**Returns:** The number of seconds it took to run the test, or **undefined** if the test has not yet been completed.
 
 # durationMilliseconds
 
 Get the length of time taken to run this test, in milliseconds.
 
-**Returns:** The number of milliseconds it took to run the test, or `undefined` if the test has not yet been completed.
+**Returns:** The number of milliseconds it took to run the test, or **undefined** if the test has not yet been completed.
 
 # addError
 
 Add an error to the test's list of recorded errors.
 
-The method requires an [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object and optionally accepts another argument indicating the test or callback where the error occurred.
+The method requires an [**Error**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object and optionally accepts another argument indicating the test or callback where the error occurred.
 
 **Arguments:** `({Error} error, {CanaryTest|CanaryTestCalback} location)`
 
-**Returns:** The newly-created [`CanaryTestError`](api-error-class.md) instance.
+**Returns:** The newly-created [**CanaryTestError**](api-error-class.md) instance.
 
 # abort
 
 Abort the test and mark it as failed.
 
-[`onEnd`](api-group-callbacks.md#onend), and [`onEachEnd`](api-group-callbacks.md#oneachend) callbacks will be executed upon calling this method.
+[**onEnd**](api-group-callbacks.md#onend), and [**onEachEnd**](api-group-callbacks.md#oneachend) callbacks will be executed upon calling this method.
 
-The method optionally accepts information about the error that resulted in the test being aborted. The first argument, if provided, must be an [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object, and the second argument can be used to indicate the test or callback where the error occured. (This is the same as with the [`addError`](api-advanced-usage.md#adderror) method.)
+The method optionally accepts information about the error that resulted in the test being aborted. The first argument, if provided, must be an [**Error**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object, and the second argument can be used to indicate the test or callback where the error occured. (This is the same as with the [addError**](api-advanced-usage.md#adderror) method.)
 
 **Arguments:** `({Error} error, {CanaryTest|CanaryTestCalback} location)`
 
@@ -137,9 +164,9 @@ The method optionally accepts information about the error that resulted in the t
 
 Abort the test as failed, though not as aborted.
 
-This method should only be called as the test is completed, since it immediately executes any [`onEnd`](api-group-callbacks.md#onend), and [`onEachEnd`](api-group-callbacks.md#oneachend) callbacks.
+This method should only be called as the test is completed, since it immediately executes any [**onEnd**](api-group-callbacks.md#onend), and [**onEachEnd**](api-group-callbacks.md#oneachend) callbacks.
 
-The method optionally accepts information about the error that caused the test to fail. The first argument, if provided, must be an [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object, and the second argument can be used to indicate the test or callback where the error occured. (This is the same as with the [`addError`](api-advanced-usage.md#adderror) method.)
+The method optionally accepts information about the error that caused the test to fail. The first argument, if provided, must be an [**Error**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object, and the second argument can be used to indicate the test or callback where the error occured. (This is the same as with the [addError**](api-advanced-usage.md#adderror) method.)
 
 **Arguments:** `({Error} error, {CanaryTest|CanaryTestCalback} location)`
 
@@ -147,41 +174,41 @@ The method optionally accepts information about the error that caused the test t
 
 Get whether any errors were encountered while running this test.
 
-**Returns:** `true` when the test has recorded any errors and `false` when it has not.
+**Returns:** **true** when the test has recorded any errors and **false** when it has not.
 
 # noErrors
 
 Get whether this test was run without encountering any errors.
 
-**Returns:** `false` when the test has recorded any errors and `true` when it has not.
+**Returns:** **false** when the test has recorded any errors and **true** when it has not.
 
 # getErrors
 
 Get a list of errors that were encountered while attempting this test, if any.
 
-**Returns:** An array of [`CanaryTestError`](api-error-class.md) objects encountered while running this test.
+**Returns:** An array of [**CanaryTestError**](api-error-class.md) objects encountered while running this test.
 
 # anyFailedChildren
 
 Get whether any child tests of a test group or series failed.
 
-**Returns:** `true` when any child tests have failed and `false` otherwise.
+**Returns:** **true** when any child tests have failed and **false** otherwise.
 
-If this method is called for an individual test rather than for a test group, then the return value will always be `false`.
+If this method is called for an individual test rather than for a test group, then the return value will always be **false**.
 
 # noFailedChildren
 
 Get whether none of the child tests of a test group or series have been marked as failed.
 
-**Returns:** `true` when no child tests have failed and `false` when any have failed.
+**Returns:** **true** when no child tests have failed and **false** when any have failed.
 
-If this method is called for an individual test rather than for a test group, then the return value will always be `true`.
+If this method is called for an individual test rather than for a test group, then the return value will always be **true**.
 
 # getFailedChildren
 
 Get a list of child tests that have failed, if any.
 
-**Returns:** An array of [`CanaryTest`](api-introduction.md) objects representing the failed child tests.
+**Returns:** An array of [**CanaryTest**](api-introduction.md) objects representing the failed child tests.
 
 If this method is called for an individual test rather than for a test group, then the returned array will always be empty.
 
@@ -199,7 +226,7 @@ Remove a child test from a parent group.
 
 **Arguments:** `({CanaryTest} test)`
 
-**Returns:** `true` if the test was in fact a child and was removed and `false` if it was not.
+**Returns:** **true** if the test was in fact a child and was removed and **false** if it was not.
 
 # removeAllTests
 
@@ -224,37 +251,37 @@ assert(someGroup.getChildren().length === 0);
 
 Remove a test from its parent group.
 
-**Returns:** `true` if the test did in fact have a parent and was orphaned and `false` if it did not.
+**Returns:** **true** if the test did in fact have a parent and was orphaned and **false** if it did not.
 
 # getParent
 
-Get the [`CanaryTest`](api-introduction.md) instance which is the parent of this one.
+Get the [**CanaryTest**](api-introduction.md) instance which is the parent of this one.
 
-**Returns:** The [`CanaryTest`](api-introduction.md) instance to which this test has been added, or `undefined` if the test does not have a parent.
+**Returns:** The [**CanaryTest**](api-introduction.md) instance to which this test has been added, or **undefined** if the test does not have a parent.
 
 # getChildren
 
 Get a list of the tests that are children of this test group.
 
-Note that if this method is called for a test group or series, and the group has not already been expanded, then this method will cause it to be expanded. (As though the `expandGroups` method was called.)
+Note that if this method is called for a test group or series, and the group has not already been expanded, then this method will cause it to be expanded. (As though the [**expandGroups**](api-advanced-usage.md#expandgroups) method was called.)
 
-**Returns:** An array of [`CanaryTest`](api-introduction.md) instances which are children of this test group.
+**Returns:** An array of [**CanaryTest**](api-introduction.md) instances which are children of this test group.
 
 # applyFilter
 
 Applies a filter function recursively to a test group and all of its children. Tests for which no ancestors or descendants satisfy the filter will be marked, then skipped when tests are run.
 
-Note that if this method is called for a test group or series, and the group has not already been expanded, then this method will cause it to be expanded. (As though the `expandGroups` method was called.)
+Note that if this method is called for a test group or series, and the group has not already been expanded, then this method will cause it to be expanded. (As though the [**expandGroups**](api-advanced-usage.md#expandgroups) method was called.)
 
-This method is leveraged by `doReport` in order to enforce the filtering criteria that are passed to it.
+This method is leveraged by [**doReport**](api-running-tests.md#doreport) in order to enforce the filtering criteria that are passed to it.
 
 **Arguments:** `({function} filter)`
 
-**Returns:** `true` if this test or any of its descendants satisfied the filter and `false` if not.
+**Returns:** **true** if this test or any of its descendants satisfied the filter and **false** if not.
 
 # resetFilter
 
-Reset filtered state that may have been set by the [`applyFilter`](api-advanced-usage.md#resetfilter) method. Any tests that were previously set as filtered out will be restored to their normal state.
+Reset filtered state that may have been set by the [**applyFilter**](api-advanced-usage.md#resetfilter) method. Any tests that were previously set as filtered out will be restored to their normal state.
 
 # expandGroups
 

@@ -1,10 +1,14 @@
 Canary is a tool for writing and running automated tests in JavaScript code.
 
-It can be found on github at [github.com/mapita/canary](https://github.com/mapita/canary).
+It can be found on GitHub at [github.com/mapita/canary](https://github.com/mapita/canary).
 
 ## Installation
 
-Canary can be installed and added to a JavaScript project with `npm install canary-test --save`.
+Canary can be installed and added to a JavaScript project using [npm](https://www.npmjs.com/get-npm).
+
+``` bash
+npm install canary-test
+```
 
 ## Example Usage
 
@@ -38,7 +42,7 @@ canary.group("leftPad", function(){
 });
 ```
 
-These tests could then be run with a single function call. This call might be placed in its own JavaScript file that runs when when you `npm run test`, or it might be placed in your main application code behind a command-line arugment switch, or any way that works best for you.
+These tests could then be run with a single function call. This call might be placed in its own JavaScript file that runs when when you use [**npm test**](https://docs.npmjs.com/cli/test), or it might be placed in your main application code behind a command-line arugment switch, or any other way that works best for you.
 
 ``` js
 require("canary-test").doReport();

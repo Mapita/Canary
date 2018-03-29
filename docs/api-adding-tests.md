@@ -1,12 +1,12 @@
-These [`CanaryTest`](api-introduction.md) methods are needed to write tests that can be run with Canary.
+These [**CanaryTest**](api-introduction.md) methods are needed to write tests that can be run with Canary.
 
 Tests and test groups can optionally be assigned names. It is strongly recommended that test names always be provided, since descriptive names will make it easier to understand where errors occur, when they occur.
 
 There are three different kinds of tests:
 
-- Individual tests, created using the [`test`](api-adding-tests.md#test) method.
-- Test groups, created using the [`group`](api-adding-tests.md#group) method.
-- Test series, created using the [`series`](api-adding-tests.md#series) method.
+- Individual tests, created using the [**test**](api-adding-tests.md#test) method.
+- Test groups, created using the [**group**](api-adding-tests.md#group) method.
+- Test series, created using the [**series**](api-adding-tests.md#series) method.
 
 An individual test can be synchronous or asynchronous. It represents a single test prodecude, and it is the most basic building block of a test suite.
 
@@ -18,19 +18,19 @@ A test series is a special case of a test group. A test series is distinguished 
 
 **Use a test series when:** It contains tests that have side effects that may impact the other tests in the series, such as when testing a stateful API.
 
-Using these structures, a test tree, or hierarchy, is created. The individual tests are the leaves on this test tree and the test groups and series represent their own subtrees. Normally, the global `canary` instance will always be at the root of the test tree.
+Using these structures, a test tree, or hierarchy, is created. The individual tests are the leaves on this test tree and the test groups and series represent their own subtrees. Normally, the global [**canary**](api-introduction.md) instance will always be at the root of the test tree.
 
 # test
 
-Add an individual test to a test group or series, such as the global `canary` instance.
+Add an individual test to a test group or series, such as the global [**canary**](api-introduction.md) instance.
 
 **Arguments:** `({string} name, {function} body)` _or_ `({function} body)`
 
-If the body function returns a [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), then when the test is run Canary will wait to see if the promise is resolved or rejected before completing the test and progressing to the next one. (A resolved promise indicates that this part of the test ran without errors and a rejected promise is treated the same as an unhandled thrown error.)
+If the body function returns a [**Promise**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), then when the test is run Canary will wait to see if the promise is resolved or rejected before completing the test and progressing to the next one. (A resolved promise indicates that this part of the test ran without errors and a rejected promise is treated the same as an unhandled thrown error.)
 
-When the body function is called, both `this` and the first argument will refer to the test to which the function belongs.
+When the body function is called, both [**this**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this) and the first argument will refer to the test to which the function belongs.
 
-**Returns:** The newly-created [`CanaryTest`](api-introduction.md) instance.
+**Returns:** The newly-created [**CanaryTest**](api-introduction.md) instance.
 
 **Examples:**
 
@@ -57,17 +57,17 @@ canary.group("Example test group", function(){
 
 # group
 
-Add a test group to a parent test or series. A test group is a special kind of test that may have child tests and callbacks such as [`onBegin`](api-group-callbacks.md#onbegin) and [`onEnd`](api-group-callbacks.md#onend), but must not itself contain test logic.
+Add a test group to a parent test or series. A test group is a special kind of test that may have child tests and callbacks such as [**onBegin**](api-group-callbacks.md#onbegin) and [**onEnd**](api-group-callbacks.md#onend), but must not itself contain test logic.
 
 Unlike a test series, the children of a test group are not guaranteed to run in the order that they were added to the group. This means that the tests added to a group should be fully independent of one another. If they are not independent, then a series should be used instead.
 
 **Arguments:** `({string} name, {function} body)` _or_ `({function} body)`
 
-The body function should be synchronous. If it happens to return a [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) then, unlike a test instantiated with the `test` method, Canary will not wait for that promise to be resolved or rejected.
+The body function should be synchronous. If it happens to return a [**Promise**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) then, unlike a test instantiated with the [**test**](api-adding-tests.md#test) method, Canary will not wait for that promise to be resolved or rejected.
 
-When the body function is called, both `this` and the first argument will refer to the test to which the function belongs.
+When the body function is called, both [**this**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this) and the first argument will refer to the test to which the function belongs.
 
-**Returns:** The newly-created [`CanaryTest`](api-introduction.md) instance.
+**Returns:** The newly-created [**CanaryTest**](api-introduction.md) instance.
 
 **Examples:**
 
@@ -90,15 +90,15 @@ canary.group("Example test group", function(){
 
 Add a test series to a parent test or series. A test series is a special kind of test group that will always run its child tests in the order they were added, and that will abort at the first failure of any child test.
 
-Like a normal test group, a test series should have a synchronous body function without itself containing any test logic, and it may use callbacks like [`onBegin`](api-group-callbacks.md#onbegin) and [`onEnd`](api-group-callbacks.md#onend).
+Like a normal test group, a test series should have a synchronous body function without itself containing any test logic, and it may use callbacks like [**onBegin**](api-group-callbacks.md#onbegin) and [**onEnd**](api-group-callbacks.md#onend).
 
 **Arguments:** `({string} name, {function} body)` _or_ `({function} body)`
 
-The body function should be synchronous. If it happens to return a [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) then, unlike a test instantiated with the `test` method, Canary will not wait for that promise to be resolved or rejected.
+The body function should be synchronous. If it happens to return a [**Promise**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) then, unlike a test instantiated with the [**test**](api-adding-tests.md#test) method, Canary will not wait for that promise to be resolved or rejected.
 
-When the body function is called, both `this` and the first argument will refer to the test to which the function belongs.
+When the body function is called, both [**this**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this) and the first argument will refer to the test to which the function belongs.
 
-**Returns:** The newly-created [`CanaryTest`](api-introduction.md) instance.
+**Returns:** The newly-created [**CanaryTest**](api-introduction.md) instance.
 
 **Examples:**
 
