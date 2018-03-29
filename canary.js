@@ -38,6 +38,19 @@ class CanaryTestError{
     get message(){
         return this.error ? this.error.message : undefined;
     }
+    // Access the error object's name string.
+    get name(){
+        return this.error ? this.error.name : undefined;
+    }
+    // Get the original Error instance that was recorded.
+    getError(){
+        return this.error;
+    }
+    // Get the location, such as a test or test callback, where this
+    // error took place.
+    getLocation(){
+        return this.location;
+    }
     // Get a short yet identifying name for the test or callback where
     // this error was encountered, or undefined if the location is unknown.
     getLocationName(){
