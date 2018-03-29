@@ -201,6 +201,14 @@ class CanaryTest{
             child.todo();
         }
     }
+    // Remove "TODO" from this test and all children.
+    removeTodo(){
+        this.logVerbose(`Removing todo status from test "${this.name}".`);
+        this.isTodo = false;
+        for(let child of this.children){
+            child.removeTodo();
+        }
+    }
     // Mark the test and all its children as ignored. These tests will not be
     // attempted.
     ignore(){
