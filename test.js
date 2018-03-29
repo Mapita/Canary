@@ -13,6 +13,7 @@ async function runTests(){
             console.log(`Running test "${test.name}"...`);
             canary.removeAllTests();
             canary.reset();
+            canary.setLogFunction(console.log);
             canary.silent();
             await test();
         }catch(error){
@@ -26,7 +27,20 @@ async function runTests(){
 }
 
 addTest(
-    async function simpleSynchronousTests(){
+    async function testReferencesToCanaryClasses(){
+        // Check CanaryTest class
+        assert(canary instanceof canary.Test);
+        // Check CanaryTestCallback class
+        const callback = canary.onBegin(() => {});
+        assert(callback instanceof canary.Callback);
+        // Check CanaryTestError class
+        const error = canary.addError(new Error("!!"));
+        assert(error instanceof canary.Error);
+    }
+);
+
+addTest(
+    async function testSimpleSynchronousTests(){
         // Set up the test
         const simplePassingTest = canary.test("Example passing test", function(){
             // do nothing
@@ -51,7 +65,7 @@ addTest(
 );
 
 addTest(
-    async function simpleAsynchronousTests(){
+    async function testSimpleAsynchronousTests(){
         // Set up the test
         const simplePassingTest = canary.test("Example passing test", async function(){
             // do nothing
@@ -76,7 +90,7 @@ addTest(
 );
 
 addTest(
-    async function allPassingTests(){
+    async function testWithPassingSyncAndAsyncTests(){
         // Set up the test
         const syncPassingTest = canary.test("Synchronous passing test", function(){
             // do nothing
@@ -107,7 +121,7 @@ addTest(
 );
 
 addTest(
-    async function verifyTestsRunInOrder(){
+    async function testExecutionOrderOfTests(){
         // Set up the test
         let counter = 0;
         const firstTest = canary.test("First test (synchronous)", function(){
@@ -189,7 +203,32 @@ addTest(
 );
 
 addTest(
-    async function doReportFilteringBehavior(){
+    async function testGettingNamesAndTitles(){
+        // Set up the test
+        let test;
+        let callback;
+        const group = canary.group("Example test group", function(){
+            test = this.test("Example test", function(){
+                // do nothing
+            });
+            callback = this.onEnd("Example callback", function(){
+                // do nothing
+            });
+        });
+        // Run canary
+        await canary.run();
+        // Verify correct results
+        assert(group.getName() === "Example test group");
+        assert(group.getTitle() === "Example test group");
+        assert(test.getName() === "Example test");
+        assert(test.getTitle() === "Example test group => Example test");
+        assert(callback.getName() === "Example test group => onEnd (Example callback)");
+        assert(callback.getTitle() === "Example test group => onEnd (Example callback)");
+    }
+)
+
+addTest(
+    async function testDoReportFilteringBehavior(){
         // Set up the test
         const passingTest = canary.test("Passing test", function(){
             // do nothing
@@ -385,6 +424,221 @@ addTest(
         // Verify correct results
         assert(canary.success);
         assert(counter === 10);
+    }
+);
+
+addTest(
+    async function testAddingAndCheckingTags(){
+        const test = canary.test("Example test", function(){
+            // do nothing
+        });
+        // Check before adding any tags
+        assert(test.getTags().length === 0);
+        assert(!test.hasTag("hello"));
+        assert(!test.hasTag("world"));
+        assert(!test.hasTag("nope"));
+        // Add some tags
+        test.tags("hello", "world");
+        // Check results
+        assert(test.getTags().length === 2);
+        assert(test.hasTag("hello"));
+        assert(test.hasTag("world"));
+        assert(!test.hasTag("nope"));
+    }
+);
+
+addTest(
+    async function testGroupFailedChildren(){
+        // Set up the test
+        const failingGroup = canary.group("Example test group", function(){
+            this.test("First test (passing)", function(){
+                // do nothing
+            });
+            this.test("Second test (failing)", function(){
+                throw new Error("Example test failure #1");
+            });
+            this.test("Third test (failing)", function(){
+                throw new Error("Example test failure #2");
+            });
+        });
+        const passingGroup = canary.group("Example test group", function(){
+            this.test("First test (passing)", function(){
+                // do nothing
+            });
+            this.test("Second test (passing)", function(){
+                // do nothing
+            });
+        });
+        // Run canary
+        await canary.run();
+        // Verify correct results for failing group
+        assert(failingGroup.failed);
+        assert(failingGroup.anyFailedChildren());
+        assert(!failingGroup.noFailedChildren());
+        const failedChildren = failingGroup.getFailedChildren();
+        assert(failedChildren.length === 2);
+        assert(failedChildren[0].getName() === "Second test (failing)");
+        assert(failedChildren[1].getName() === "Third test (failing)");
+        // Verify correct results for passing group
+        assert(passingGroup.success);
+        assert(passingGroup.noFailedChildren());
+        assert(!passingGroup.anyFailedChildren());
+        assert(passingGroup.getFailedChildren().length === 0);
+    }
+);
+
+addTest(
+    async function testTodoFlag(){
+        const someTest = canary.test("Example test", () => {});
+        assert(!someTest.isTodo);
+        assert(!someTest.shouldSkip());
+        someTest.todo();
+        assert(someTest.isTodo);
+        assert(someTest.shouldSkip());
+    }
+);
+
+addTest(
+    async function testIgnoreAndUnignore(){
+        const someTest = canary.test("Example test", () => {});
+        assert(!someTest.isIgnored);
+        assert(!someTest.shouldSkip());
+        someTest.ignore();
+        assert(someTest.isIgnored);
+        assert(someTest.shouldSkip());
+        someTest.unignore();
+        assert(!someTest.isIgnored);
+        assert(!someTest.shouldSkip());
+    }
+);
+
+addTest(
+    async function testApplyFilterAndResetFilter(){
+        // Set up tests
+        const firstTest = canary.test("Test #1", () => {});
+        const secondTest = canary.test("Test #2", () => {});
+        const thirdTest = canary.test("Test #3", () => {});
+        const fourthTest = canary.test("Test #4", () => {});
+        // Apply a filter and check results
+        canary.applyFilter(test => {
+            return test.getName().endsWith("1") || test.getName().endsWith("4");
+        });
+        assert(!firstTest.filtered);
+        assert(!firstTest.shouldSkip());
+        assert(secondTest.filtered);
+        assert(secondTest.shouldSkip());
+        assert(thirdTest.filtered);
+        assert(thirdTest.shouldSkip());
+        assert(!fourthTest.filtered);
+        assert(!fourthTest.shouldSkip());
+        // Revert the filter and check results
+        canary.resetFilter();
+        assert(!firstTest.filtered);
+        assert(!firstTest.shouldSkip());
+        assert(!secondTest.filtered);
+        assert(!secondTest.shouldSkip());
+        assert(!thirdTest.filtered);
+        assert(!thirdTest.shouldSkip());
+        assert(!fourthTest.filtered);
+        assert(!fourthTest.shouldSkip());
+    }
+);
+
+addTest(
+    async function testParentsAndChildren(){
+        // Set up the test
+        let firstTest;
+        let secondTest;
+        const testGroup = canary.group("Example test group", function(){
+            firstTest = this.test("First test (passing)", function(){
+                // do nothing
+            });
+            secondTest = this.test("Second test (passing)", function(){
+                // do nothing
+            });
+        });
+        const isolatedTest = new canary.Test("Some test outside the test tree",
+            () => {}
+        );
+        // Run canary
+        await canary.run();
+        // Check test tree structure
+        assert(canary.getChildren().length === 1);
+        assert(canary.getChildren()[0] === testGroup);
+        assert(testGroup.getChildren().length === 2);
+        assert(testGroup.getChildren()[0] === firstTest);
+        assert(testGroup.getChildren()[1] === secondTest);
+        assert(testGroup.getParent() === canary);
+        assert(firstTest.getParent() === testGroup);
+        assert(secondTest.getParent() === testGroup);
+        assert(isolatedTest.getParent() === undefined);
+        // Can't remove a test that isn't in the tree
+        assert(!canary.removeTest(isolatedTest));
+        assert(!testGroup.removeTest(testGroup));
+        // Make changes to the test tree
+        assert(canary.removeTest(firstTest));
+        assert(canary.getChildren().length === 1);
+        assert(testGroup.getChildren().length === 1);
+        assert(secondTest.orphan());
+        assert(canary.getChildren().length === 1);
+        assert(testGroup.getChildren().length === 0);
+    }
+);
+
+addTest(
+    async function testDuration(){
+        // Set up the test
+        const someTest = canary.test("Example test", function(){
+            return new Promise((resolve, reject) => {
+                setTimeout(resolve, 100);
+            });
+        });
+        // Run canary
+        await canary.run();
+        // Verify correct results
+        const milliseconds = someTest.getDurationMilliseconds();
+        assert(Math.abs(100 - milliseconds) < 50);
+        assert(someTest.getDurationSeconds() === milliseconds * 0.001);
+    }
+);
+
+addTest(
+    async function testLogFunction(){
+        // Check initial conditions
+        canary.silent();
+        canary.notVerbose();
+        assert(canary.getLogFunction() === console.log);
+        // Define a log function for testing
+        let counter = 0;
+        const logFunction = message => counter++;
+        canary.setLogFunction(logFunction);
+        // Check that child tests will also use the same log function
+        const someTest = canary.test("Example test", () => {});
+        assert(someTest.getLogFunction() === logFunction);
+        // Check logging behavior when silent
+        canary.log("Not logged because Canary is set to run silently.");
+        canary.logVerbose("Also not logged");
+        assert(counter === 0);
+        // Check logging behavior when not silent
+        canary.notSilent();
+        canary.log("Logged!");
+        canary.logVerbose("Not logged.");
+        assert(counter === 1);
+        // Check logging behavior when verbose, and not silent
+        canary.verbose();
+        canary.log("Logged!");
+        canary.logVerbose("Also logged");
+        assert(counter === 3);
+        // Un-set verbose logging
+        canary.notVerbose();
+        canary.log("Logged!");
+        canary.logVerbose("Not logged.");
+        assert(counter === 4);
+        // Return to silenced logs
+        canary.silent();
+        canary.log("Not logged because Canary is set to run silently.");
+        canary.logVerbose("Also not logged");
+        assert(counter === 4);
     }
 );
 
