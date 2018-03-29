@@ -1,6 +1,6 @@
 {
   "name": "canary-test",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Write and run automated tests in JavaScript code.",
   "keywords": [
     "test", "testing", "unit test", "automated test", "stability"
