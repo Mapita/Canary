@@ -160,6 +160,8 @@ class CanaryTest{
         this.onEachEndCallbacks = [];
         // A dictionary of tags assigned to this test in particular.
         this.tagDictionary = {};
+        // Logging function determining what should happen to logged messages
+        this.logFunction = console.log;
         // The location where this test was defined.
         const location = this.getCallerLocation();
         if(location){
@@ -224,6 +226,13 @@ class CanaryTest{
             child.silent();
         }
     }
+    // Mark the test and all its children as not silent.
+    notSilent(){
+        this.isSilent = false;
+        for(let child of this.children){
+            child.notSilent();
+        }
+    }
     // Mark the test and all its children as verbose. They will log a lot of
     // information about the test process.
     // It also un-silences silenced tests.
@@ -232,6 +241,13 @@ class CanaryTest{
         this.isSilent = false;
         for(let child of this.children){
             child.verbose();
+        }
+    }
+    // Mark the test and all its children as not silent.
+    notVerbose(){
+        this.isVerbose = false;
+        for(let child of this.children){
+            child.notVerbose();
         }
     }
     // Assign some tags to this test, which will be inherited by its children
@@ -286,16 +302,25 @@ class CanaryTest{
     getName(){
         return this.name;
     }
+    getLogFunction(){
+        return this.logFunction;
+    }
+    setLogFunction(logFunction){
+        this.logFunction = logFunction;
+        for(let child of this.children){
+            child.setLogFunction(logFunction);
+        }
+    }
     // Log a message. (Except if the test was marked as silent.)
-    log(...message){
+    log(message){
         if(!this.isSilent){
-            return console.log(...message);
+            return this.logFunction(message);
         }
     }
     // Log a verbose message.
-    logVerbose(...message){
+    logVerbose(message){
         if(this.isVerbose && !this.isSilent){
-            return console.log(...message);
+            return this.logFunction(message);
         }
     }
     // Helper function to retrieve the current time in milliseconds.
@@ -307,7 +332,7 @@ class CanaryTest{
         }
     }
     // Get how long the test took to run, in seconds
-    get durationSeconds(){
+    getDurationSeconds(){
         if(this.startTime === undefined || this.endTime === undefined){
             return undefined;
         }else{
@@ -315,7 +340,7 @@ class CanaryTest{
         }
     }
     // Get how long the test took to run, in milliseconds
-    get durationMilliseconds(){
+    getDurationMilliseconds(){
         if(this.startTime === undefined || this.endTime === undefined){
             return undefined;
         }else{
@@ -557,7 +582,7 @@ class CanaryTest{
         // If no errors were encountered during this completion process, log a
         // message explaining that the test was completed.
         }else{
-            const duration = this.durationSeconds.toFixed(3);
+            const duration = this.getDurationSeconds().toFixed(3);
             if(this.isGroup){
                 this.log(`Completed test group "${this.getTitle()}". (${duration}s)`);
             }else{
@@ -618,8 +643,7 @@ class CanaryTest{
             `"${this.parent.name}".`
         );
         if(this.parent.removeTest){
-            this.parent.removeTest(this);
-            return true;
+            return this.parent.removeTest(this);
         }
         this.parent = undefined;
         return false;
@@ -635,6 +659,12 @@ class CanaryTest{
             this.children[index].parent = undefined;
             this.children.splice(index, 1);
             return true;
+        }else{
+            for(let searchChild of this.children){
+                if(searchChild.removeTest(child)){
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -677,6 +707,7 @@ class CanaryTest{
         test.isIgnored = this.isIgnored;
         test.isSilent = this.isSilent;
         test.isVerbose = this.isVerbose;
+        test.logFunction = this.logFunction;
         // All done! Return the produced CanaryTest instance.
         return test;
     }
@@ -768,7 +799,6 @@ class CanaryTest{
         }else{
             let anyChildSatisfies = false;
             for(let child of this.children){
-                this.logVerbose("Checking child: ", child.name);
                 if(child.applyFilter(filter)){
                     anyChildSatisfies = true;
                 }
@@ -951,10 +981,11 @@ class CanaryTest{
             text += yellow(`- ${this.name} (TODO)`);
         // The test ran successfully.
         }else if(this.success){
-            if(this.durationSeconds === undefined){
+            const seconds = this.getDurationSeconds();
+            if(seconds === undefined){
                 text += green(`✓ ${this.name}`);
             }else{
-                text += green(`✓ ${this.name} (${this.durationSeconds.toFixed(3)}s)`);
+                text += green(`✓ ${this.name} (${seconds.toFixed(3)}s)`);
             }
         // The test encountered an error or errors.
         }else if(this.anyErrors()){
@@ -1056,9 +1087,9 @@ class CanaryTest{
         try{
             // Set a default empty options object when none was specified.
             options = options || {};
-            function log(...message){
+            function log(message){
                 if(!options.silent){
-                    console.log(...message);
+                    return this.getLogFunction()(message);
                 }
             }
             // Indicate that tests are about to be run!

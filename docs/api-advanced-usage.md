@@ -18,7 +18,7 @@ const test = new canary.Test("Example test", function(){
 
 # silent
 
-Set a test and all its children to run silently. This means that they will not output any log messages.
+Recursively set a test and all its children to run silently. This means that they will not output any log messages.
 
 The [**log**](api-intermediate-usage.md#log) method of a [**CanaryTest**](api-introduction.md) instance can be used to log a message only if the test has not been set to run silently.
 
@@ -31,6 +31,12 @@ canary.test("Example silent test", function(){
     this.silent();
 });
 ```
+
+# notSilent
+
+Recursively set a test and all its children to not [run silently](api-advanced-usage.md#silent). (This is the default behavior.)
+
+The [**log**](api-intermediate-usage.md#log) method of a [**CanaryTest**](api-introduction.md) instance can be used to log a message only if the test has not been set to run silently.
 
 # verbose
 
@@ -49,6 +55,12 @@ canary.test("Example verbose test", function(){
     this.verbose();
 });
 ```
+
+# notVerbose
+
+Recursively set a test and all its children to not [run verbosely](api-advanced-usage.md#verbose). (This is the default behavior.)
+
+The [**logVerbose**](api-intermediate-usage.md#logverbose) method of a [**CanaryTest**](api-introduction.md) instance can be used to log a message only when the test is set to run verbosely.
 
 # unignore
 
@@ -128,13 +140,13 @@ Get a string representing the status of this test.
 
 **Returns:** `"skipped"` if the test was marked as skipped or was never attempted, `"passed"` if the test completed successfully, or `"failed"` if the test was unsuccessful.
 
-# durationSeconds
+# getDurationSeconds
 
 Get the length of time taken to run this test, in seconds.
 
 **Returns:** The number of seconds it took to run the test, or **undefined** if the test has not yet been completed.
 
-# durationMilliseconds
+# getDurationMilliseconds
 
 Get the length of time taken to run this test, in milliseconds.
 
@@ -222,7 +234,9 @@ Note that if the test was previously added to another test group, it will be rem
 
 # removeTest
 
-Remove a child test from a parent group.
+Remove a child test from a test tree.
+
+This method searches recursively for the given test, so it will be removed regardless of whether it is an immediate child of this test, or if it is a child of a child, etc.
 
 **Arguments:** `({CanaryTest} test)`
 

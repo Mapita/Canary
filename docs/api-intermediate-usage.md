@@ -60,11 +60,9 @@ canary.group("Example test group", function(){
 
 # log
 
-Log a message to the console, except for if this test has been set to run silently.
+Log a message, except for if this test has been set to run silently.
 
-**Arguments:** `(...{anything} message)`
-
-The arguments to the function are treated the same as with [**console.log**](https://developer.mozilla.org/en-US/docs/Web/API/Console/log).
+**Arguments:** `({object} message)`
 
 **Examples:**
 
@@ -76,11 +74,9 @@ canary.test("Example test", function(){
 
 # logVerbose
 
-Log a message to the console, but only if this test has been set to run verbosely.
+Log a message, but only if this test has been set to run verbosely.
 
-**Arguments:** `(...{anything} message)`
-
-The arguments to the function are treated the same as with [**console.log**](https://developer.mozilla.org/en-US/docs/Web/API/Console/log).
+**Arguments:** `({object} message)`
 
 **Examples:**
 
@@ -90,3 +86,30 @@ canary.test("Example test", function(){
 });
 ```
 
+# getLogFunction
+
+Get the logging function that is being used by this test. By default, Canary uses [**console.log**](https://developer.mozilla.org/en-US/docs/Web/API/Console/log) when logging messages.
+
+**Returns:** The function which is invoked to log messages.
+
+**Examples:**
+
+``` js
+const logFunction = canary.getLogFunction();
+assert(logFunction === console.log);
+```
+
+# setLogFunction
+
+Set the logging function that is being used by this test and all children tests. By default, Canary uses [**console.log**](https://developer.mozilla.org/en-US/docs/Web/API/Console/log) when logging messages.
+
+**Arguments:** `({function} logFunction)`
+
+**Examples:**
+
+``` js
+// Add a timestamp in front of every message that Canary outputs
+canary.setLogFunction(message => {
+    return console.log((new Date()).toISOString() + ": " + message);
+});
+```
