@@ -563,7 +563,7 @@ class CanaryTest{
             }
             // Actually attempt the callback.
             try{
-                const result = callback.body.call(callback.owner, callback.owner, ...callbackArguments);
+                const result = callback.body.call(this, this, ...callbackArguments);
                 // If the callback returned a promise, then wait for it to resolve.
                 if(result instanceof Promise){
                     await result;
