@@ -708,6 +708,16 @@ class CanaryTest{
         test.isSilent = this.isSilent;
         test.isVerbose = this.isVerbose;
         test.logFunction = this.logFunction;
+        // Log a verbose warning for a very possible mistake
+        const currentGroup = CanaryTest.currentlyExpandingGroup;
+        if(currentGroup && currentGroup !== this){
+            this.log(yellow(
+                `Warning: Adding test "${name}" to a group other than ` +
+                `"${currentGroup.getTitle()}" even though the operation is ` +
+                `taking place in that group's body function. This is ` +
+                `probably unintended!`
+            ));
+        }
         // All done! Return the produced CanaryTest instance.
         return test;
     }
@@ -767,7 +777,12 @@ class CanaryTest{
             if(this.isGroup && !this.isExpandedGroup && this.body){
                 this.expandTime = this.getTime();
                 this.isExpandedGroup = true;
+                // Expand the group by evaluating the body function, and record
+                // whose body function this is in while doing so.
+                const previousExpandingGroup = CanaryTest.currentlyExpandingGroup;
+                CanaryTest.currentlyExpandingGroup = this;
                 this.bodyReturnedValue = this.body(this);
+                CanaryTest.currentlyExpandingGroup = previousExpandingGroup;
                 this.logVerbose(
                     `Test group "${this.name}" has ${this.children.length} ` +
                     `child tests after expansion.`
@@ -1235,33 +1250,6 @@ canary.Callback = CanaryTestCallback;
 canary.Error = CanaryTestError;
 canary.Test = CanaryTest;
 
+CanaryTest.currentlyExpandingGroup = undefined;
+
 module.exports = canary;
-
-// canary.group("Test a thing", function(){
-//     // this.onBegin("reset the database", canary.resetDatabase);
-//     // this.onBegin("register and login", canary.registerAndLogin);
-    
-//     this.logVerbose("Doing the stuff");
-//     this.tags("someTag");
-//     this.onBegin("stuff", () => this.logVerbose("begin"));
-//     this.onEnd("other stuff", () => this.logVerbose("end"));
-//     this.onEachBegin("more stuff", () => this.logVerbose("begin each"));
-//     this.onEachEnd("additional stuff", () => this.logVerbose("end each"));
-//     this.test("Test another thing", function(){
-//         this.logVerbose("first thing");
-//     });
-//     this.test("Only test if the last thing passed", function(){
-//         this.logVerbose("second thing");
-//     });
-// });
-
-// (async function(){await canary.doReport();})();
-
-// (async function(){
-//     await canary.doReport({
-//         // verbose: true,
-//         paths: ["/Users/pineapple"]
-//     });
-// })();
-
-// canary.doReport();
