@@ -171,6 +171,7 @@ class CanaryTest{
     // Reset the state of the test and all child tests so that it is safe to
     // run it again.
     reset(){
+        this.logVerbose(`Resetting test "${this.name}".`);
         this.attempted = false;
         this.skipped = false;
         this.success = undefined;
@@ -187,6 +188,7 @@ class CanaryTest{
     // Mark the test and all its children as "TODO". These tests will not be
     // attempted.
     todo(){
+        this.logVerbose(`Marking test "${this.name}" as todo.`);
         this.isTodo = true;
         for(let child of this.children){
             child.todo();
@@ -195,6 +197,7 @@ class CanaryTest{
     // Mark the test and all its children as ignored. These tests will not be
     // attempted.
     ignore(){
+        this.logVerbose(`Marking test "${this.name}" as ignored.`);
         this.isIgnored = true;
         for(let child of this.children){
             child.ignore();
@@ -202,6 +205,7 @@ class CanaryTest{
     }
     // Mark the test and all its children as not-ignored.
     unignore(){
+        this.logVerbose(`Marking test "${this.name}" as unignored.`);
         this.isIgnored = false;
         for(let child of this.children){
             child.unignore();
@@ -217,8 +221,10 @@ class CanaryTest{
     }
     // Mark the test and all its children as verbose. They will log a lot of
     // information about the test process.
+    // It also un-silences silenced tests.
     verbose(){
         this.isVerbose = true;
+        this.isSilent = false;
         for(let child of this.children){
             child.verbose();
         }
@@ -558,7 +564,7 @@ class CanaryTest{
             // When the exitOnError flag is set, check that the test has not
             // entered any kind of error or abort state before going through
             // with the next callback.
-            if((this.aborted || this.anyErrors()) && this.exitOnError){
+            if((this.aborted || this.failure || this.anyErrors()) && this.exitOnError){
                 return;
             }
             // Actually attempt the callback.
@@ -592,7 +598,6 @@ class CanaryTest{
         }
         const testError = new CanaryTestError(this, error, location);
         this.errors.push(testError);
-        this.success = false;
         return testError;
     }
     // A failed test is one that was completed, but somehow ended up in an
@@ -645,7 +650,7 @@ class CanaryTest{
         this.aborted = false;
         // Run onSuccess and onEachSuccess callbacks.
         if(this.noErrors()){
-            this.doSuccessCallbacks();
+            await this.doSuccessCallbacks();
         }
         // If there were any errors (probably caused by an onSuccess or
         // onEachSuccess callback if encountered at this point) abort the test.
@@ -680,49 +685,89 @@ class CanaryTest{
         this.logVerbose(`Skipping test "${this.name}".`);
         this.skipped = true;
         this.endTime = this.getTime();
-        this.startTime = this.startTime || this.endTime;
     }
     // Invoke onBegin callbacks.
     async doBeginCallbacks(){
         if(this.parent){
-            this.logVerbose(`Executing parent's onEachBegin callbacks for test "${this.name}".`);
+            this.logVerbose(
+                `Executing parent's ${this.parent.onEachBeginCallbacks.length} ` +
+                `onEachBegin callbacks for test "${this.name}".`
+            );
             await this.runCallbacks(true, this.parent.onEachBeginCallbacks);
         }
         if(this.noErrors() && !this.failed && !this.aborted){
-            this.logVerbose(`Executing onBegin callbacks for test "${this.name}".`);
+            this.logVerbose(
+                `Executing ${this.onBeginCallbacks.length} onBegin callbacks ` +
+                `for test "${this.name}".`
+            );
             await this.runCallbacks(true, this.onBeginCallbacks);
+        }else if(this.parent){
+            this.logVerbose(
+                `Skipping onBegin callbacks for test "${this.name}" due to ` +
+                `errors encountered while running onEachBegin callbacks.`
+            );
         }
     }
     // Invoke onEnd and parent's onEachEnd callbacks.
     async doEndCallbacks(){
-        this.logVerbose(`Executing onEnd callbacks for test "${this.name}".`);
+        this.logVerbose(
+            `Executing ${this.onEndCallbacks.length} onEnd callbacks ` +
+            `for test "${this.name}".`
+        );
         await this.runCallbacks(false, this.onEndCallbacks);
         if(this.parent){
-            this.logVerbose(`Executing parent's onEachEnd callbacks for test "${this.name}".`);
+            this.logVerbose(
+                `Executing parent's ${this.parent.onEachEndCallbacks.length} ` +
+                `onEachEnd callbacks for test "${this.name}".`
+            );
             await this.runCallbacks(false, this.parent.onEachEndCallbacks);
         }
     }
     // Invoke onSuccess and parent's onEachSuccess callbacks.
     async doSuccessCallbacks(){
-        this.logVerbose(`Executing onSuccess callbacks for test "${this.name}".`);
+        this.logVerbose(
+            `Executing ${this.onSuccessCallbacks.length} onSuccess callbacks ` +
+            `for test "${this.name}".`
+        );
         await this.runCallbacks(true, this.onSuccessCallbacks);
         if(this.parent && this.noErrors() && !this.failed && !this.aborted){
-            this.logVerbose(`Executing parent's onEachSuccess callbacks for test "${this.name}".`);
+            this.logVerbose(
+                `Executing parent's ${this.parent.onEachSuccessCallbacks.length} ` +
+                `onEachSuccess callbacks for test "${this.name}".`
+            );
             await this.runCallbacks(true, this.parent.onEachSuccessCallbacks);
+        }else if(this.parent){
+            this.logVerbose(
+                `Skipping parent's onEachSuccess callbacks for test ` +
+                `"${this.name}" due to errors while running onSuccess callbacks.`
+            );
         }
     }
     // Invoke onFailure and parent's onEachFailure callbacks.
     async doFailureCallbacks(){
-        this.logVerbose(`Executing onFailure callbacks for test "${this.name}".`);
+        this.logVerbose(
+            `Executing ${this.onFailureCallbacks.length} onFailure callbacks ` +
+            `for test "${this.name}".`
+        );
         await this.runCallbacks(false, this.onFailureCallbacks);
         if(this.parent){
-            this.logVerbose(`Executing parent's onEachFailure callbacks for test "${this.name}".`);
+            this.logVerbose(
+                `Executing parent's ${this.parent.onEachFailureCallbacks.length} ` +
+                `onEachFailure callbacks for test "${this.name}".`
+            );
             await this.runCallbacks(false, this.parent.onEachFailureCallbacks);
         }
     }
     // Orphan a child test, i.e. remove it from its parent.
     orphan(){
-        if(this.parent && this.parent.removeTest){
+        if(!this.parent){
+            return;
+        }
+        this.logVerbose(
+            `Orphaning test "${this.name}" from its parent ` +
+            `"${this.parent.name}".`
+        );
+        if(this.parent.removeTest){
             this.parent.removeTest(this);
             return true;
         }
@@ -731,7 +776,10 @@ class CanaryTest{
     }
     // Remove a child test.
     removeTest(child){
-        this.logVerbose(`Removing child test "${child.name}" from parent test "${this.name}".`);
+        this.logVerbose(
+            `Removing child test "${child.name}" from parent test ` +
+            `"${this.name}".`
+        );
         const index = this.children.indexOf(child);
         if(index >= 0){
             this.children[index].parent = undefined;
@@ -750,7 +798,9 @@ class CanaryTest{
     }
     // Add a Test instance as a child of this one.
     addTest(child){
-        this.logVerbose(`Adding a child test "${child.name}" to parent "${this.name}".`);
+        this.logVerbose(
+            `Adding test "${child.name}" as a child of parent "${this.name}".`
+        );
         if(!this.isGroup){
             throw new Error("Tests can only be added as children to test groups.");
         }
@@ -758,9 +808,6 @@ class CanaryTest{
             child.orphan();
         }
         child.parent = this;
-        child.isTodo = child.isTodo || this.isTodo;
-        child.isIgnored = child.isIgnored || this.isIgnored;
-        child.isSilent = child.isSilent || this.isSilent;
         this.children.push(child);
     }
     // Create a Test instance with the given attributes, then assign it as a
@@ -775,6 +822,11 @@ class CanaryTest{
         const test = new CanaryTest(name, body);
         // Add it as a child of this test.
         this.addTest(test);
+        // Set some properties of the child test to match properties of this test.
+        test.isTodo = this.isTodo;
+        test.isIgnored = this.isIgnored;
+        test.isSilent = this.isSilent;
+        test.isVerbose = this.isVerbose;
         // All done! Return the produced CanaryTest instance.
         return test;
     }

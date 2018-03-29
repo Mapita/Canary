@@ -40,6 +40,8 @@ The `logVerbose` method of a [`CanaryTest`](api-introduction.md) instance can be
 
 Note that when the `verbose` flag of the `doReport` function is set, it will cause all tests to run verbosely that were not otherwise set to run silently.
 
+Marking a test as verbose will also mark it as not silent, overriding any previous calls to [`silent`](api-advanced-usage.md#silent).
+
 **Examples:**
 
 ``` js
