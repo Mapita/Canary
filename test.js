@@ -306,12 +306,8 @@ addTest(
                 assert(counter === 2);
                 counter++;
             });
-            this.onSuccess(function(){
-                assert(counter === 3);
-                counter++;
-            });
             this.onEnd(function(){
-                assert(counter === 4);
+                assert(counter === 3);
                 counter++;
             });
         });
@@ -319,7 +315,76 @@ addTest(
         await canary.run();
         // Verify correct results
         assert(canary.success);
-        assert(counter === 5);
+        assert(counter === 4);
+    }
+);
+
+addTest(
+    async function testSuccessfulGroupEachCallbackOrder(){
+        // Set up the test
+        // The order of events should go like this:
+        // 0: Parent => onBegin
+        // 1: Parent => onEachBegin (First child)
+        // 2: First child => onBegin
+        // 3: First child => onEnd
+        // 4: Parent => onEachEnd (First child)
+        // 5: Parent => onEachBegin (Second child)
+        // 6: Second child => onBegin
+        // 7: Second child => onEnd
+        // 8: Parent => onEachEnd (Second child)
+        // 9: Parent => onEnd
+        let counter = 0;
+        const testGroup = canary.group("Parent test group", function(){
+            this.onBegin(function(){
+                assert(counter === 0);
+                counter++;
+            });
+            this.onEachBegin(function(){
+                if(this.getName() === "First child test group"){
+                    assert(counter === 1);
+                }else{
+                    assert(counter === 5);
+                }
+                counter++;
+            });
+            this.onEachEnd(function(){
+                if(this.getName() === "First child test group"){
+                    assert(counter === 4);
+                }else{
+                    assert(counter === 8);
+                }
+                counter++;
+            });
+            this.group("First child test group", function(){
+                this.onBegin(function(){
+                    assert(counter === 2);
+                    counter++;
+                });
+                this.onEnd(function(){
+                    assert(counter === 3);
+                    counter++;
+                });
+            });
+            this.group("Second child test group", function(){
+                this.onBegin(function(){
+                    assert(counter === 6);
+                    counter++;
+                });
+                this.onEnd(function(){
+                    assert(counter === 7);
+                    counter++;
+                });
+            });
+            this.onEnd(function(){
+                assert(counter === 9);
+                counter++;
+            });
+        });
+        // Run canary
+        await canary.run();
+        // Verify correct results
+        assert(canary.success);
+        assert(counter === 10);
     }
 );
 

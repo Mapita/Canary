@@ -127,7 +127,7 @@ The method requires an [`Error`](https://developer.mozilla.org/en-US/docs/Web/Ja
 
 Abort the test and mark it as failed.
 
-[`onFailure`](api-group-callbacks.md#onfailure), [`onEachFailure`](api-group-callbacks.md#oneachfailure), [`onEnd`](api-group-callbacks.md#onend), and [`onEachEnd`](api-group-callbacks.md#oneachend) callbacks will be executed upon calling this method.
+[`onEnd`](api-group-callbacks.md#onend), and [`onEachEnd`](api-group-callbacks.md#oneachend) callbacks will be executed upon calling this method.
 
 The method optionally accepts information about the error that resulted in the test being aborted. The first argument, if provided, must be an [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object, and the second argument can be used to indicate the test or callback where the error occured. (This is the same as with the [`addError`](api-advanced-usage.md#adderror) method.)
 
@@ -137,7 +137,7 @@ The method optionally accepts information about the error that resulted in the t
 
 Abort the test as failed, though not as aborted.
 
-This method should only be called as the test is completed, since it immediately executes any [`onFailure`](api-group-callbacks.md#onfailure), [`onEachFailure`](api-group-callbacks.md#oneachfailure), [`onEnd`](api-group-callbacks.md#onend), and [`onEachEnd`](api-group-callbacks.md#oneachend) callbacks.
+This method should only be called as the test is completed, since it immediately executes any [`onEnd`](api-group-callbacks.md#onend), and [`onEachEnd`](api-group-callbacks.md#oneachend) callbacks.
 
 The method optionally accepts information about the error that caused the test to fail. The first argument, if provided, must be an [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object, and the second argument can be used to indicate the test or callback where the error occured. (This is the same as with the [`addError`](api-advanced-usage.md#adderror) method.)
 

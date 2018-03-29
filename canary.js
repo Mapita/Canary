@@ -141,18 +141,10 @@ class CanaryTest{
         this.onBeginCallbacks = [];
         // An array of onEnd callbacks.
         this.onEndCallbacks = [];
-        // An array of onSuccess callbacks.
-        this.onSuccessCallbacks = [];
-        // An array of onFailure callbacks.
-        this.onFailureCallbacks = [];
         // An array of onEachBegin callbacks.
         this.onEachBeginCallbacks = [];
         // An array of onEachEnd callbacks.
         this.onEachEndCallbacks = [];
-        // An array of onEachSuccess callbacks.
-        this.onEachSuccessCallbacks = [];
-        // An array of onEachFailure callbacks.
-        this.onEachFailureCallbacks = [];
         // A dictionary of tags assigned to this test in particular.
         this.tagDictionary = {};
         // The location where this test was defined.
@@ -427,127 +419,20 @@ class CanaryTest{
         return testCallback;
     }
     // Add an onBegin callback.
-    // These callbacks are applied to the test which assigned them.
-    // These callbacks are invoked when a before running
-    // child tests, but after evaluating a test's body. (Normally, the body
-    // function is responsible for adding the callback in the first place.)
-    // They run after onEachBegin callbacks but before all other callbacks.
-    // If any onBegin callback produces an error or otherwise aborts the test,
-    // any remaining such callbacks will be ignored.
     onBegin(name, callback){
         return this.addCallback("onBegin", this.onBeginCallbacks, name, callback);
     }
     // Add an onEnd callback.
-    // These callbacks are applied to the test which assigned them.
-    // These callbacks are invoked after the test is either aborted due to a
-    // failure or completed successfully.
-    // Applicable onEnd callbacks and onEachEnd callbacks always execute
-    // together; first the onEnd callbacks and then the onEachEnd callbacks.
-    // They run after all other callbacks.
-    // If any onEnd or onEachEnd callback produces an error or otherwise aborts
-    // the test, any remaining such callbacks will still be attempted.
     onEnd(name, callback){
         return this.addCallback("onEnd", this.onEndCallbacks, name, callback);
     }
-    // Add an onSuccess callback.
-    // These callbacks are applied to the test which assigned them.
-    // These callbacks are invoked after a test's body, and all of its
-    // children are evaluated without producing any errors or otherwise aborting
-    // the test.
-    // Applicable onSuccess callbacks and onEachSuccess callbacks always
-    // execute together; first the onSuccess callbacks and then the
-    // onEachSuccess callbacks.
-    // They run after onBegin and onEachBegin.
-    // They run before onEnd and onEachEnd callbacks. They will also run before
-    // onFailure and onEachFailure callbacks in the case that an onSuccess or
-    // onEachSuccess callback produces an error or otherwise aborts the test
-    // after what would otherwise have been a success.
-    // If any onSuccess or onEachSuccess callback produces an error or otherwise
-    // aborts the test, any remaining such callbacks will be ignored.
-    onSuccess(name, callback){
-        return this.addCallback("onSuccess", this.onSuccessCallbacks, name, callback);
-    }
-    // Add an onFailure callback.
-    // These callbacks are applied to the test which assigned them.
-    // These callbacks are invoked after a test is aborted. Typically this will
-    // be due to an error thrown while running the test, but it may happen
-    // because a child test was aborted, or because somewhere this test's
-    // abort method was explicitly called.
-    // Applicable onFailure callbacks and onEachFailure callbacks always
-    // execute together; first the onFailure callbacks and then the
-    // onEachFailure callbacks.
-    // They run after onBegin and onEachBegin. They will
-    // also run after onSuccess and onEachSuccess callbacks in the case that an
-    // onSuccess or onEachSuccess callback produces an error or otherwise aborts
-    // the test after what would otherwise have been a success.
-    // They run before onEnd and onEachEnd callbacks.
-    // If any onFailure or onEachFailure callback produces an error or otherwise
-    // aborts the test, any remaining such callbacks will still be attempted.
-    onFailure(name, callback){
-        return this.addCallback("onFailure", this.onFailureCallbacks, name, callback);
-    }
     // Add an onEachBegin callback.
-    // These callbacks are applied to every immediate child test, but not to
-    // the parent test which assigned the onEachBegin callbacks.
-    // These callbacks are invoked immediately after initializing each immediate
-    // child test, before evaluating their bodies, or other callbacks.
-    // They run before all other callbacks.
-    // If any onEachBegin callback produces an error or otherwise aborts the
-    // test, any remaining such callbacks will be ignored.
     onEachBegin(name, callback){
         return this.addCallback("onEachBegin", this.onEachBeginCallbacks, name, callback);
     }
     // Add an onEachEnd callback.
-    // These callbacks are applied to every immediate child test, but not to
-    // the parent test which assigned the onEachEnd callbacks.
-    // These callbacks are invoked after each immediate child test is either
-    // aborted due to a failure or completed successfully.
-    // Applicable onEnd callbacks and onEachEnd callbacks always execute
-    // together; first the onEnd callbacks and then the onEachEnd callbacks.
-    // They run after all other callbacks.
-    // If any onEnd or onEachEnd callback produces an error or otherwise aborts
-    // the test, any remaining such callbacks will still be attempted.
     onEachEnd(name, callback){
         return this.addCallback("onEachEnd", this.onEachEndCallbacks, name, callback);
-    }
-    // Add an onEachSuccess callback.
-    // These callbacks are applied to every immediate child test, but not to
-    // the parent test which assigned the onEachSuccess callbacks.
-    // These callbacks are invoked after every immediate child test's body
-    // and all of its own children are evaluated without producing any
-    // errors or otherwise aborting the child test.
-    // Applicable onSuccess callbacks and onEachSuccess callbacks always
-    // execute together; first the onSuccess callbacks and then the
-    // onEachSuccess callbacks.
-    // They run after onBegin and onEachBegin callbacks.
-    // They run before onEnd and onEachEnd callbacks. They will also run before
-    // onFailure and onEachFailure callbacks in the case that an onSuccess or
-    // onEachSuccess callback produces an error or otherwise aborts the test
-    // after what would otherwise have been a success.
-    // If any onSuccess or onEachSuccess callback produces an error or otherwise
-    // aborts the test, any remaining such callbacks will be ignored.
-    onEachSuccess(name, callback){
-        return this.addCallback("onEachSuccess", this.onEachSuccessCallbacks, name, callback);
-    }
-    // Add an onEachFailure callback.
-    // These callbacks are applied to every immediate child test, but not to
-    // the parent test which assigned the onEachFailure callbacks.
-    // These callbacks are invoked after a child test is aborted. Typically this
-    // will be due to an error thrown while running the test, but it may happen
-    // because one if the child's own child tests were aborted, or because
-    // somewhere the child test's abort method was explicitly called.
-    // Applicable onFailure callbacks and onEachFailure callbacks always
-    // execute together; first the onFailure callbacks and then the
-    // onEachFailure callbacks.
-    // They run after onBegin and onEachBegin callbacks. They will
-    // also run after onSuccess and onEachSuccess callbacks in the case that an
-    // onSuccess or onEachSuccess callback produces an error or otherwise aborts
-    // the test after what would otherwise have been a success.
-    // They run before onEnd and onEachEnd callbacks.
-    // If any onFailure or onEachFailure callback produces an error or otherwise
-    // aborts the test, any remaining such callbacks will still be attempted.
-    onEachFailure(name, callback){
-        return this.addCallback("onEachFailure", this.onEachFailureCallbacks, name, callback);
     }
     // Internal helper method to run a list of callbacks.
     async runCallbacks(exitOnError, callbackList, ...callbackArguments){
@@ -606,8 +491,8 @@ class CanaryTest{
     async fail(error = undefined, location = undefined){
         this.logVerbose(`Beginning to fail test "${this.name}"...`);
         // If the test was already failed, then skip all of this.
-        // This might happen if, for example, an onFailure, onEachFailure,
-        // onEnd, or onEachEnd callback attempts to abort the test.
+        // This might happen if, for example, an onEnd, or onEachEnd callback
+        // attempts to abort the test.
         if(this.failed){
             return;
         }
@@ -621,8 +506,6 @@ class CanaryTest{
         }
         // Log a message stating that the test is being aborted.
         this.log(`Failing test "${this.name}".`);
-        // Run onFailure and onEachFailure callbacks.
-        await this.doFailureCallbacks();
         // Run onEnd and onEachEnd callbacks.
         await this.doEndCallbacks();
         // All done! Mark the time.
@@ -648,18 +531,7 @@ class CanaryTest{
         this.success = true;
         this.failed = false;
         this.aborted = false;
-        // Run onSuccess and onEachSuccess callbacks.
-        if(this.noErrors()){
-            await this.doSuccessCallbacks();
-        }
-        // If there were any errors (probably caused by an onSuccess or
-        // onEachSuccess callback if encountered at this point) abort the test.
-        if(this.anyErrors()){
-            return await this.abort();
-        }
-        // Otherwise, if everything still looks good, run onEnd and onEachEnd
-        // callbacks. Note that if the test was aborted above, these callbacks
-        // will instead be run by the abort process.
+        // Run onEnd and onEachEnd callbacks.
         await this.doEndCallbacks();
         // Wrapping up! Mark the time.
         this.endTime = this.getTime();
@@ -721,41 +593,6 @@ class CanaryTest{
                 `onEachEnd callbacks for test "${this.name}".`
             );
             await this.runCallbacks(false, this.parent.onEachEndCallbacks);
-        }
-    }
-    // Invoke onSuccess and parent's onEachSuccess callbacks.
-    async doSuccessCallbacks(){
-        this.logVerbose(
-            `Executing ${this.onSuccessCallbacks.length} onSuccess callbacks ` +
-            `for test "${this.name}".`
-        );
-        await this.runCallbacks(true, this.onSuccessCallbacks);
-        if(this.parent && this.noErrors() && !this.failed && !this.aborted){
-            this.logVerbose(
-                `Executing parent's ${this.parent.onEachSuccessCallbacks.length} ` +
-                `onEachSuccess callbacks for test "${this.name}".`
-            );
-            await this.runCallbacks(true, this.parent.onEachSuccessCallbacks);
-        }else if(this.parent){
-            this.logVerbose(
-                `Skipping parent's onEachSuccess callbacks for test ` +
-                `"${this.name}" due to errors while running onSuccess callbacks.`
-            );
-        }
-    }
-    // Invoke onFailure and parent's onEachFailure callbacks.
-    async doFailureCallbacks(){
-        this.logVerbose(
-            `Executing ${this.onFailureCallbacks.length} onFailure callbacks ` +
-            `for test "${this.name}".`
-        );
-        await this.runCallbacks(false, this.onFailureCallbacks);
-        if(this.parent){
-            this.logVerbose(
-                `Executing parent's ${this.parent.onEachFailureCallbacks.length} ` +
-                `onEachFailure callbacks for test "${this.name}".`
-            );
-            await this.runCallbacks(false, this.parent.onEachFailureCallbacks);
         }
     }
     // Orphan a child test, i.e. remove it from its parent.
@@ -1059,13 +896,12 @@ class CanaryTest{
             // a failed child test was the cause!
             if(this.anyErrors() || this.anyFailedChildren()){
                 return await this.fail();
-            // Otherwise mark the test as complete and run onSuccess and onEnd
-            // callbacks
+            // Otherwise mark the test as complete and run onEnd callbacks
             }else if(!this.aborted && !this.failed){
                 return await this.complete();
             }
         }catch(error){
-            // Mark the test as failed and run onFailure and onEnd callbacks
+            // Mark the test as failed and run onEnd callbacks
             this.logVerbose(
                 `Aborting due to an unhandled error encountered while ` +
                 `running test "${this.name}".`
