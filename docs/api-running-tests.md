@@ -14,7 +14,7 @@ These are the attributes of the options object which the [**doReport**](api-runn
 - `{boolean} keepAlive`: Normally, the process is terminated with a zero status code after running all tests successfully or a nonzero status code after running tests with any errors. When this flag is specified, [**doReport**](api-running-tests.md#doreport) will not terminate the process.
 - `{function} filter`: A function which accepts a [**CanaryTest**](api-introduction.md) instance and returns a truthy value when the test should be run and a falsey value when the test should be skipped.
 - `{array} names`: An array of names to filter tests by; only tests with one of these names or belonging to a group with one of these names will be run.
-- `{array} tags`: An array of tags to filter tests by; only tests with one of these tags or belonging to a group with one of these tags will be run.
+- `{array} tags`: An array of [tags](api-tagging-tests.md) to filter tests by; only tests with one of these tags or belonging to a group with one of these tags will be run. Tags can be added to tests using the [**tags**](api-tagging-tests.md#tags) method.
 - `{array} paths`: An array of file paths to filter tests by; only tests declared in a file whose path begins with this string, or belonging to a group with a matching file path, will be run.
 
 When a filter applies positively to a test, that test's containing group, and its containing group, and so on will be run (though not necessarily their other child tests), and all children of the matching test will be run.
@@ -23,7 +23,7 @@ Note that when more than one filter is specified using e.g. the **filter**, **na
 
 **Returns:** An object with **passed**, **failed**, **skipped**, and **errors** attributes.
 
-Note that the returned object is exactly the same as if [**getReport**](api-running-tests.md#getreport) was called after running tests. This is only meaningful, however, if the **keepAlive** flag was given in the options object. (Otherwise, the function will terminate the program.)
+Note that the returned object is exactly the same as if [**getReport**](api-running-tests.md#getreport) was called after running tests. This is only meaningful, however, if the **keepAlive** flag was given in the options object. (Otherwise, the function will terminate the program and it won't matter what it returns.)
 
 **Examples:**
 
@@ -75,4 +75,29 @@ canary.test("Example test", function(){
 canary.run().then(() => {
     console.log("Finished running tests!");
 });
+```
+
+# reset
+
+Resets the test's state so that it is safe to run it again. This method resets tests recursively, so all tests that belong to a group will also be reset.
+
+**Examples:**
+
+``` js
+const someTest = canary.test("Example test", function(){
+    assert(1 + 1 === 2);
+});
+// Run the test once
+await canary.run();
+// Verify its success state
+assert(someTest.attempted);
+assert(someTest.success);
+// Reset it
+someTest.reset();
+assert(!someTest.attempted);
+assert(!someTest.success);
+// Run it again!
+await canary.run();
+assert(someTest.attempted);
+assert(someTest.success);
 ```

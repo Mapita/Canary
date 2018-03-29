@@ -120,14 +120,14 @@ The callback function is invoked with both [**this**](https://developer.mozilla.
 
 ``` js
 canary.group("Example test group", function(){
+    this.onEachEnd("Clean up after each test", function(){
+        doCleanUpStuff();
+    });
     this.test("First example test", function(){
         assert("hello" === "hello");
     });
     this.test("Second example test", function(){
         assert("world" === "world");
-    });
-    this.onEachEnd("Clean up after each test", function(){
-        doCleanUpStuff();
     });
 });
 ```

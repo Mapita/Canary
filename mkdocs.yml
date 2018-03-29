@@ -6,8 +6,12 @@ pages:
       - Adding Tests: api-adding-tests.md
       - Adding Callbacks: api-group-callbacks.md
       - Running Tests: api-running-tests.md
-      - Intermediate Usage: api-intermediate-usage.md
+      - Tagging Tests: api-tagging-tests.md
+      - Skipping Tests: api-skipping-tests.md
+      - Filtering Tests: api-filtering-tests.md
+      - Logging Behavior: api-logging.md
       - Advanced Usage: api-advanced-usage.md
+      - Test Status Attributes: api-status-attributes.md
       - Callback Class: api-callback-class.md
       - Error Class: api-error-class.md
 theme: readthedocs

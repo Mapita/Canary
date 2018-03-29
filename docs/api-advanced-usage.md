@@ -16,85 +16,6 @@ const test = new canary.Test("Example test", function(){
 });
 ```
 
-# silent
-
-Recursively set a test and all its children to run silently. This means that they will not output any log messages.
-
-The [**log**](api-intermediate-usage.md#log) method of a [**CanaryTest**](api-introduction.md) instance can be used to log a message only if the test has not been set to run silently.
-
-Note that when the **concise** flag of the [**doReport**](api-running-tests.md#doreport) function is set, it will cause all tests to run silently.
-
-**Examples:**
-
-``` js
-canary.test("Example silent test", function(){
-    this.silent();
-});
-```
-
-# notSilent
-
-Recursively set a test and all its children to not [run silently](api-advanced-usage.md#silent). (This is the default behavior.)
-
-The [**log**](api-intermediate-usage.md#log) method of a [**CanaryTest**](api-introduction.md) instance can be used to log a message only if the test has not been set to run silently.
-
-# verbose
-
-Set a test and all its children to run verbosely. This means they will output even more detailed logs than usual.
-
-The [**logVerbose**](api-intermediate-usage.md#logverbose) method of a [**CanaryTest**](api-introduction.md) instance can be used to log a message only when the test is set to run verbosely.
-
-Note that when the **verbose** flag of the [**doReport**](api-running-tests.md#doreport) function is set, it will cause all tests to run verbosely that were not otherwise set to run silently.
-
-Marking a test as verbose will also mark it as not silent, overriding any previous calls to [**silent**](api-advanced-usage.md#silent).
-
-**Examples:**
-
-``` js
-canary.test("Example verbose test", function(){
-    this.verbose();
-});
-```
-
-# notVerbose
-
-Recursively set a test and all its children to not [run verbosely](api-advanced-usage.md#verbose). (This is the default behavior.)
-
-The [**logVerbose**](api-intermediate-usage.md#logverbose) method of a [**CanaryTest**](api-introduction.md) instance can be used to log a message only when the test is set to run verbosely.
-
-# unignore
-
-Un-ignore a test that was previously marked as being ignored.
-
-**Examples:**
-
-``` js
-const someTest = canary.test("Example test", function(){
-    this.ignore();
-});
-someTest.unignore(); // Nevermind!
-```
-
-# shouldSkip
-
-Check whether any flags have been set that will cause this test to be skipped, such as by using the [**todo**](api-intermediate-usage.md#todo) or [**ignore**](api-intermediate-usage.md#ignore) methods.
-
-**Returns:** **true** is marked to be skipped **false** when it is not so marked.
-
-**Examples:**
-
-``` js
-const someTest = canary.test("Example test", function(){
-    assert(1 === 1);
-});
-// Test is currently normal and isn't marked to be skipped
-assert(!someTest.shouldSkip());
-// Mark it as ignored
-someTest.ignore();
-// Now the test should in fact be skipped
-assert(someTest.shouldSkip());
-```
-
 # getTitle
 
 Get an identifying title for this test. A test's title is its name, preceded by the name of its parent test, preceded by its parent's name, and so on.
@@ -106,33 +27,6 @@ Get an identifying title for this test. A test's title is its name, preceded by 
 Get the name provided for this test.
 
 **Returns:** The test's name as a string.
-
-# hasTag
-
-Determine whether this test has a certain tag or not.
-
-**Arguments:** `({string} tag)`
-
-**Returns:** **true** when the test has the tag and **false** when it does not.
-
-**Examples:**
-
-``` js
-const someTest = canary.test("Example test", function(){
-    assert(1 === 1);
-});
-// Add some tags to the test
-someTest.tags("hello", "world");
-// Check for the presence of tags
-assert(someTest.hasTag("hello"));
-assert(!someTest.hasTag("not an actual tag"));
-```
-
-# getTags
-
-Get a list of tags that have been added to this test.
-
-**Returns:** An array of tags.
 
 # getStatusString
 
@@ -281,22 +175,6 @@ Note that if this method is called for a test group or series, and the group has
 
 **Returns:** An array of [**CanaryTest**](api-introduction.md) instances which are children of this test group.
 
-# applyFilter
-
-Applies a filter function recursively to a test group and all of its children. Tests for which no ancestors or descendants satisfy the filter will be marked, then skipped when tests are run.
-
-Note that if this method is called for a test group or series, and the group has not already been expanded, then this method will cause it to be expanded. (As though the [**expandGroups**](api-advanced-usage.md#expandgroups) method was called.)
-
-This method is leveraged by [**doReport**](api-running-tests.md#doreport) in order to enforce the filtering criteria that are passed to it.
-
-**Arguments:** `({function} filter)`
-
-**Returns:** **true** if this test or any of its descendants satisfied the filter and **false** if not.
-
-# resetFilter
-
-Reset filtered state that may have been set by the [**applyFilter**](api-advanced-usage.md#resetfilter) method. Any tests that were previously set as filtered out will be restored to their normal state.
-
 # expandGroups
 
 Recursively run all the body functions assigned to test groups, but not to ordinary tests. This has the effect of elaborating the structure of the test tree without actually running tests.
@@ -318,31 +196,4 @@ assert(someGroup.getChildren().length === 0);
 // structure of the test tree.
 canary.expandGroups();
 assert(someGroup.getChildren().length === 1);
-```
-
-# reset
-
-Resets the test's state so that it is safe to run it again. This method resets tests recursively, so all tests that belong to a group will also be reset.
-
-**Examples:**
-
-``` js
-const someTest = canary.test("Example test", function(){
-    assert(1 + 1 === 2);
-});
-// Run the test once
-canary.run().then(() => {
-    // Verify its success state
-    assert(someTest.attempted);
-    assert(someTest.success);
-    // Reset it
-    someTest.reset();
-    assert(!someTest.attempted);
-    assert(!someTest.success);
-    // Run it again
-    canary.run().then(() => {
-        assert(someTest.attempted);
-        assert(someTest.success);
-    });
-});
 ```
