@@ -250,7 +250,7 @@ class CanaryTest{
     }
     // Get whether this test has a certain tag.
     hasTag(tag){
-        return tag in this.tagDictionary[tag];
+        return tag in this.tagDictionary;
     }
     // Get whether this test should be skipped, e.g. if its todo or ignore
     // flag has been set.
