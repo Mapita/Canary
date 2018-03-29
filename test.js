@@ -642,4 +642,56 @@ addTest(
     }
 );
 
+addTest(
+    async function testGetReport(){
+        // Set up the test
+        let firstTest;
+        let secondTest;
+        let thirdTest;
+        let fourthTest;
+        let fifthTest;
+        const failingGroup = canary.series("First example test series", function(){
+            firstTest = this.test("First test (passing)", function(){
+                // do nothing
+            });
+            secondTest = this.test("Second test (failing)", function(){
+                throw new Error("Example test failure");
+            });
+            thirdTest = this.test("Third test (skipped)", function(){
+                // test is skipped
+            });
+        });
+        const passingGroup = canary.series("Second example test series", function(){
+            fourthTest = this.test("Fourth test (passing)", function(){
+                // do nothing
+            });
+            fifthTest = this.test("Fifth test (skipped)", function(){
+                this.ignore();
+            });
+        });
+        // Run canary
+        await canary.run();
+        // Verify correct report results
+        const report = canary.getReport();
+        assert(report.passed);
+        assert(report.failed);
+        assert(report.skipped);
+        assert(report.errors);
+        assert(report.passed.length === 3);
+        assert(report.passed.indexOf(firstTest) >= 0);
+        assert(report.passed.indexOf(fourthTest) >= 0);
+        assert(report.passed.indexOf(passingGroup) >= 0);
+        assert(report.failed.length === 3);
+        assert(report.failed.indexOf(secondTest) >= 0);
+        assert(report.failed.indexOf(failingGroup) >= 0);
+        assert(report.failed.indexOf(canary) >= 0);
+        assert(report.skipped.length === 2);
+        assert(report.skipped.indexOf(thirdTest) >= 0);
+        assert(report.skipped.indexOf(fifthTest) >= 0);
+        assert(report.errors.length === 1);
+        assert(report.errors[0].message = "Example test failure");
+        assert(report.errors[0].getLocation() === secondTest);
+    }
+);
+
 runTests();
