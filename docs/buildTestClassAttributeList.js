@@ -12,7 +12,7 @@ fs.readdirSync(".").forEach(file => {
         for(let line of fileContent.split("\n")){
             if(line.startsWith("# ") && lower.indexOf(line[2]) >= 0){
                 items.push({
-                    name: line.slice(2),
+                    name: line.slice(2).trim(),
                     file: file
                 });
             }
@@ -27,5 +27,5 @@ items.sort((a, b) => {
 });
 
 for(let item of items){
-    console.log(`- [${item.name}](${item.file}#${item.name.toLowerCase()})`);
+    console.log(`- [**${item.name}**](${item.file}#${item.name.toLowerCase()})`);
 }
