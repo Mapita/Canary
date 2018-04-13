@@ -8,10 +8,22 @@ const canary = require("canary-test");
 
 # The Test Class
 
-The [**CanaryTest**](api-introduction.md) class can be referred to via [**canary.Test**](api-introduction.md). Although most of the work done with Canary will be using the methods of instances of this class, it should rarely if ever be necessary to instantiate a [**CanaryTest**](api-introduction.md) yourself.
+The [**CanaryTest**](api-introduction.md) class can be referred to via [**canary.Test**](api-introduction.md). Although most of the work done with Canary will be using the methods of instances of this class, it should not normally be necessary to instantiate a [**CanaryTest**](api-introduction.md) yourself.
 
 ``` js
 assert(canary instanceof canary.Test);
+```
+
+There are also functions available for creating disconnected test groups and series in this same way:
+
+``` js
+const someGroup = canary.Group("Some group");
+assert(someGroup.isGroup);
+```
+
+``` js
+const someSeries = canary.Series("Some series");
+assert(someSeries.isSeries);
 ```
 
 The library also utilizes [**CanaryTestCallback**](api-callback-class.md) and [**CanaryTestError**](api-error-class.md) classes. These classes can be referred to with [**canary.Callback**](api-callback-class.md) and [**canary.Error**](api-error-class.md), respectively. These classes are mainly for internal use and, normally, it will not be necessary to work with them directly.

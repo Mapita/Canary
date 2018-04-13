@@ -1108,9 +1108,9 @@ class CanaryTest{
     async doReport(options = undefined){
         let report = undefined;
         const log = message => {
-                if(!options.silent){
-                    return this.getLogFunction()(message);
-                }
+            if(!options.silent){
+                return this.getLogFunction()(message);
+            }
         };
         try{
             // Set a default empty options object when none was specified.
@@ -1257,6 +1257,17 @@ canary.isGroup = true;
 canary.Callback = CanaryTestCallback;
 canary.Error = CanaryTestError;
 canary.Test = CanaryTest;
+
+canary.Group = function(...args){
+    const group = new CanaryTest(...args);
+    group.isGroup = true;
+};
+
+canary.Series = function(...args){
+    const series = new CanaryTest(...args);
+    series.isGroup = true;
+    series.isSeries = true;
+};
 
 CanaryTest.currentlyExpandingGroup = undefined;
 
