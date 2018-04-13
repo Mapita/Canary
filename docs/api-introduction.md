@@ -14,7 +14,7 @@ The [**CanaryTest**](api-introduction.md) class can be referred to via [**canary
 assert(canary instanceof canary.Test);
 ```
 
-There are also functions available for creating disconnected test groups and series in this same way:
+There are also functions available for creating disconnected test groups and series in a similar way:
 
 ``` js
 const someGroup = canary.Group("Some group");

@@ -694,4 +694,27 @@ addTest(
     }
 );
 
+addTest(
+    async function testInstantiateDisconnectedTests(){
+        // Create a test that is not a member of the root tree
+        const test = new canary.Test("some test");
+        assert(test);
+        assert(!test.isGroup);
+        assert(!test.isSeries);
+        assert(canary.getChildren().length === 0);
+        // Create a group that is not a member of the root tree
+        const group = canary.Group("some group");
+        assert(group);
+        assert(group.isGroup);
+        assert(!group.isSeries);
+        assert(canary.getChildren().length === 0);
+        // Create a series that is not a member of the root tree
+        const series = canary.Series("some series");
+        assert(series);
+        assert(series.isGroup);
+        assert(series.isSeries);
+        assert(canary.getChildren().length === 0);
+    }
+);
+
 runTests();

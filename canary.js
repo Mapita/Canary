@@ -1261,12 +1261,14 @@ canary.Test = CanaryTest;
 canary.Group = function(...args){
     const group = new CanaryTest(...args);
     group.isGroup = true;
+    return group;
 };
 
 canary.Series = function(...args){
     const series = new CanaryTest(...args);
     series.isGroup = true;
     series.isSeries = true;
+    return series;
 };
 
 CanaryTest.currentlyExpandingGroup = undefined;
