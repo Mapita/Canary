@@ -1107,14 +1107,14 @@ class CanaryTest{
     //   such a file path. Note that file paths are normalized before comparison.
     async doReport(options = undefined){
         let report = undefined;
-        try{
-            // Set a default empty options object when none was specified.
-            options = options || {};
-            function log(message){
+        const log = message => {
                 if(!options.silent){
                     return this.getLogFunction()(message);
                 }
-            }
+        };
+        try{
+            // Set a default empty options object when none was specified.
+            options = options || {};
             // Indicate that tests are about to be run!
             log(`Running tests via Canary...`);
             // When "concise" is set, instruct tests to run silently.
