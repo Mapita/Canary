@@ -1212,7 +1212,7 @@ class CanaryTest{
             }
             if(report.passed.length === totalTests){
                 log(green(`${totalTests} of ${totalTests} tests passed.`));
-            }else{
+            }else if(report.passed.length){
                 log(`${report.passed.length} of ${totalTests} tests ${green("passed")}.`);
             }
             if(report.skipped.length){
