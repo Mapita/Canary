@@ -705,7 +705,7 @@ class CanaryTest{
     // child of this test.
     test(name, body){
         // Handle the case where a body function is given but a name is not
-        if(name && !body){
+        if(name && name instanceof Function && !body){
             body = name;
             name = `${this.nthText(this.children.length + 1)} child test`;
         }
@@ -792,7 +792,9 @@ class CanaryTest{
                 // whose body function this is in while doing so.
                 const previousExpandingGroup = CanaryTest.currentlyExpandingGroup;
                 CanaryTest.currentlyExpandingGroup = this;
-                this.bodyReturnedValue = this.body(this);
+                if(this.body){
+                    this.bodyReturnedValue = this.body(this);
+                }
                 CanaryTest.currentlyExpandingGroup = previousExpandingGroup;
                 this.logVerbose(
                     `Test group "${this.name}" has ${this.children.length} ` +
