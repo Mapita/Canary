@@ -72,7 +72,10 @@ class CanaryTestError{
     // Get the line where this error occurred.
     getLine(){
         if(this.error && this.error.stack){
-            return this.error.stack.split("\n")[1].trim();
+            let messageLineCount = (!this.error.message ? 1 :
+                this.error.message.split("\n").length
+            );
+            return this.error.stack.split("\n")[messageLineCount].trim();
         }else{
             return undefined;
         }
@@ -1034,7 +1037,7 @@ class CanaryTest{
         }
         // List one-line error summaries, if any errors were encountered.
         for(let error of this.errors){
-            text += red(`\n${prefix}${indent}Error: ${error.message}`);
+            text += red(`\n${prefix}${indent}Error: ${error.message.split("\n")[0].trim()}`);
             text += red(`\n${prefix}${indent}${indent}${error.getLine()}`);
         }
         // List status of child tests.
