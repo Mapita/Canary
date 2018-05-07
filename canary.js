@@ -1036,13 +1036,17 @@ class CanaryTest{
             text += red(`X ${this.name} (terminated unexpectedly)`);
         }
         // List one-line error summaries, if any errors were encountered.
-        for(let error of this.errors){
-            text += red(`\n${prefix}${indent}Error: ${error.message.split("\n")[0].trim()}`);
-            text += red(`\n${prefix}${indent}${indent}${error.getLine()}`);
+        if(!this.shouldSkip()){
+            for(let error of this.errors){
+                text += red(`\n${prefix}${indent}Error: ${error.message.split("\n")[0].trim()}`);
+                text += red(`\n${prefix}${indent}${indent}${error.getLine()}`);
+            }
         }
         // List status of child tests.
-        for(let child of this.children){
-            text += '\n' + child.getSummary(indent, prefix + indent);
+        if(!this.shouldSkip()){
+            for(let child of this.children){
+                text += '\n' + child.getSummary(indent, prefix + indent);
+            }
         }
         // All done! Return the built string.
         return text;
@@ -1204,6 +1208,9 @@ class CanaryTest{
                 log(this.getSummary());
                 this.logVerbose("Showing all errors...");
                 for(let error of report.errors){
+                    if(error.location.shouldSkip()){
+                        continue;
+                    }
                     const title = error.getLocationTitle();
                     if(title){
                         log(red(`Error at "${title}": ${error.stack}`));
