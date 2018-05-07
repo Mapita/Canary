@@ -1162,7 +1162,6 @@ class CanaryTest{
                 log(`Filtering tests by file paths: "${paths.join(`", "`)}"`);
                 filters.push(test => {
                     for(let path of paths){
-                        log(test.filePath);
                         if(test.filePath && test.filePath.startsWith(path)){
                             return true;
                         }
