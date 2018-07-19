@@ -1210,14 +1210,17 @@ class CanaryTest{
                 log(this.getSummary());
                 this.logVerbose("Showing all errors...");
                 for(let error of report.errors){
-                    if(error.location.shouldSkip()){
-                        continue;
-                    }
-                    const title = error.getLocationTitle();
-                    if(title){
-                        log(red(`Error at "${title}": ${error.stack}`));
-                    }else{
-                        log(red(`Error: ${error.stack}`));
+                    const location = error.location;
+                    const shouldSkip = (location instanceof CanaryTestCallback ?
+                        location.owner.shouldSkip() : location.shouldSkip()
+                    );
+                    if(!shouldSkip){
+                        const title = error.getLocationTitle();
+                        if(title){
+                            log(red(`Error at "${title}": ${error.stack}`));
+                        }else{
+                            log(red(`Error: ${error.stack}`));
+                        }
                     }
                 }
             }
