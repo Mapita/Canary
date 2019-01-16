@@ -1,10 +1,12 @@
 import {red, green, yellow} from "./util";
 import {getTime, getOrdinal, getCallerLocation, normalizePath} from "./util";
 
+// Function types accepted for a test callback body.
 export type CanaryTestCallbackBody = (
     ((test: CanaryTest) => void) | ((test: CanaryTest) => Promise<any>)
 );
 
+// Enumeration of valid test callback types.
 export enum CanaryTestCallbackType: string {
     onBegin = "onBegin",
     onEnd = "onEnd",
@@ -12,7 +14,7 @@ export enum CanaryTestCallbackType: string {
     onEachEnd = "onEachEnd",
 }
 
-export namespace CanaryTestError {
+export namespace CanaryTestCallback {
     export type Body = CanaryTestCallbackBody;
     export type Type = CanaryTestCallbackType;
 }
@@ -120,17 +122,68 @@ export class CanaryTestError{
     }
 }
 
+// Function types accepted for a CanaryTest body function.
 export type CanaryTestBody = (
     ((test: CanaryTest) => void) | ((test: CanaryTest) => Promise<any>)
 );
+
+// Acceptable signature for CanaryTest filter functions.
+export type CanaryTestFilter = (test: CanaryTest) => any;
+
+// Object returned by CanaryTest.getReport and CanaryTest.doReport.
+export interface CanaryTestReport {
+    unhandledError: null | Error;
+    passed: CanaryTest[];
+    failed: CanaryTest[];
+    skipped: CanaryTest[];
+    errors: CanaryTestError[];
+}
+
+// Options object accepted by the CanaryTest.doReport method.
+export interface CanaryTestReportOptions {
+    // Report only a small amount of information regarding the test
+    // process and its results, and set all tests to run silently.
+    concise?: boolean;
+    // Report no information at all regarding the test process.
+    // When keepAlive is not set, the process exit status code can be used
+    // to see whether the test was successful or not.
+    silent?: boolean;
+    // Report a great deal of information regarding the test process
+    // and set all tests to run verbosely.
+    verbose?: boolean;
+    // Don't terminate the process after running tests and reporting
+    // the results.
+    keepAlive?: boolean;
+    // A filter function to be applied to tests. Only tests which
+    // satisfy the filter function, or that have a direct ancestor or
+    // descendant satisfying the filter function, will be run.
+    filter?: CanaryTestFilter;
+    // Run only those tests with a name in this list, or with a direct
+    // ancestor or descendant with such a name.
+    names?: string[];
+    // Run only those tests with a tag in this list, or with a direct
+    // ancestor or descendant having such a tag.
+    tags?: string[];
+    // Run only those tests implemented in a file path matching
+    // a string in this list, or with a direct ancestor or descendant having
+    // such a file path.
+    // Note that file paths are case-sensitive and normalized before comparison.
+    paths?: string[];
+}
 
 export namespace CanaryTest {
     export type Body = CanaryTestBody;
     export type Callback = CanaryTestCallback;
     export type Error = CanaryTestError;
+    export type Filter = CanaryTestFilter;
+    export type Report = CanaryTestReport;
 }
 
 class CanaryTest{
+    // Keep track of the test group currently being expanded.
+    // Used to output warning messages if something looks unusual.
+    static currentlyExpandingGroup: null | CanaryTest = null;
+    
     // The name of the test.
     name: string = "";
     // A body function for the test. It is run as part of test initialization,
@@ -221,9 +274,11 @@ class CanaryTest{
     // The column number taken from the location.
     columnInLine: null | number = null;
     
-    constructor(name, body){
+    // Test object constructor. Accepts an identifying name and an optional
+    // body function.
+    constructor(name: string, body?: CanaryTestBody) {
         this.name = name;
-        this.body = body;
+        this.body = body || (test: CanaryTest) => {};
         const location = getCallerLocation();
         if(location){
             const locationParts = location.split(":");
@@ -235,6 +290,20 @@ class CanaryTest{
             this.lineInFile = undefined;
             this.columnInLine = undefined;
         }
+    }
+    
+    // Convenience function to create a test group.
+    static Group(name: string, body?: CanaryTestBody): CanaryTest {
+        const group = new CanaryTest(name, body);
+        group.isGroup = true;
+        return group;
+    }
+    // Convenience function to create a test series.
+    static Series(name: string, body?: CanaryTestBody): CanaryTest {
+        const series = new CanaryTest(name, body);
+        series.isGroup = true;
+        series.isSeries = true;
+        return series;
     }
     
     // Reset the state of the test and all child tests so that it's safe to
@@ -250,7 +319,7 @@ class CanaryTest{
         this.endTime = null;
         this.errors = [];
         this.failedChildren = [];
-        for(let child of this.children){
+        for(const child of this.children){
             child.reset();
         }
     }
@@ -259,7 +328,7 @@ class CanaryTest{
     todo(): void {
         this.logVerbose(`Marking test "${this.name}" as todo.`);
         this.isTodo = true;
-        for(let child of this.children){
+        for(const child of this.children){
             child.todo();
         }
     }
@@ -267,7 +336,7 @@ class CanaryTest{
     removeTodo(): void {
         this.logVerbose(`Removing todo status from test "${this.name}".`);
         this.isTodo = false;
-        for(let child of this.children){
+        for(const child of this.children){
             child.removeTodo();
         }
     }
@@ -276,7 +345,7 @@ class CanaryTest{
     ignore(): void {
         this.logVerbose(`Marking test "${this.name}" as ignored.`);
         this.isIgnored = true;
-        for(let child of this.children){
+        for(const child of this.children){
             child.ignore();
         }
     }
@@ -284,7 +353,7 @@ class CanaryTest{
     unignore(): void {
         this.logVerbose(`Marking test "${this.name}" as unignored.`);
         this.isIgnored = false;
-        for(let child of this.children){
+        for(const child of this.children){
             child.unignore();
         }
     }
@@ -292,14 +361,14 @@ class CanaryTest{
     // any log information anywhere.
     silent(): void {
         this.isSilent = true;
-        for(let child of this.children){
+        for(const child of this.children){
             child.silent();
         }
     }
     // Mark the test and all its children as not silent.
     notSilent(): void {
         this.isSilent = false;
-        for(let child of this.children){
+        for(const child of this.children){
             child.notSilent();
         }
     }
@@ -309,21 +378,21 @@ class CanaryTest{
     verbose(): void {
         this.isVerbose = true;
         this.isSilent = false;
-        for(let child of this.children){
+        for(const child of this.children){
             child.verbose();
         }
     }
     // Mark the test and all its children as not silent.
     notVerbose(): void {
         this.isVerbose = false;
-        for(let child of this.children){
+        for(const child of this.children){
             child.notVerbose();
         }
     }
     // Assign some tags to this test, which will be inherited by its children
     // and grandchildren and etc.
     tags(...tags: string[]): void {
-        for(let tag of tags){
+        for(const tag of tags){
             this.tagDictionary[String(tag)] = true;
         }
     }
@@ -342,7 +411,7 @@ class CanaryTest{
     // Get this test's tags as a list of strings.
     getTags(): string[] {
         const tagList = [];
-        for(let tag in this.tagDictionary){
+        for(const tag in this.tagDictionary){
             tagList.push(tag);
         }
         return tagList;
@@ -379,7 +448,7 @@ class CanaryTest{
     // Set the log function for this test and all of its children.
     setLogFunction(logFunction: Function): void {
         this.logFunction = logFunction;
-        for(let child of this.children){
+        for(const child of this.children){
             child.setLogFunction(logFunction);
         }
     }
@@ -521,7 +590,7 @@ class CanaryTest{
             return;
         }
         // Enumerate and invoke callbacks in order.
-        for(let callback of callbackList){
+        for(const callback of callbackList){
             // Record an error when the callback is missing an implementation.
             if(!callback.body){
                 this.addError(new Error("Callback has no implementation."), callback);
@@ -546,7 +615,7 @@ class CanaryTest{
         }
     }
     // Internal helper method which is run as a test is initialized.
-    async initialize(){
+    async initialize(): Promise<void> {
         this.logVerbose(`Initializing test "${this.name}...`);
         this.startTime = getTime();
         this.attempted = true;
@@ -555,7 +624,7 @@ class CanaryTest{
     // and the second argument is an optional location indicating where the
     // error was encountered, such as a CanaryTest instance or a
     // CanaryTestCallback instance.
-    addError(error = undefined, location = undefined){
+    addError(error: Error, location: CanaryTestErrorLocation): CanaryTestError {
         if(error){
             this.log(red(`Encountered an error while running test "${this.name}":\n  ${error.message}`));
         }else{
@@ -565,15 +634,21 @@ class CanaryTest{
         this.errors.push(testError);
         return testError;
     }
+    
     // A failed test is one that was completed, but somehow ended up in an
     // error state anyway. One example is a test group with failing child tests
     // but with no issues with the test group itself.
-    async fail(error = undefined, location = undefined){
+    async fail(): Promise<void>;
+    // Fail the test, and provide an error which is triggering the failure.
+    async fail(error: Error, location: CanaryTestErrorLocation): Promise<void>;
+    // Implementation for `fail` method.
+    async fail(error?: Error, location?: CanaryTestErrorLocation): Promise<void> {
         this.logVerbose(`Beginning to fail test "${this.name}"...`);
         // If the test was already failed, then skip all of this.
         // This might happen if, for example, an onEnd, or onEachEnd callback
         // attempts to abort the test.
         if(this.failed){
+            this.logVerbose("Ignoring because the test already failed.");
             return;
         }
         // Set failure state.
@@ -591,21 +666,25 @@ class CanaryTest{
         // All done! Mark the time.
         this.endTime = getTime();
     }
-    async abort(error = undefined, location = undefined){
+    
+    async abort(): Promise<void>;
+    async abort(error: Error, location: CanaryTestErrorLocation): Promise<void>;
+    async abort(error?: Error, location?: CanaryTestErrorLocation): Promise<void> {
         this.logVerbose(`Beginning to abort test "${this.name}"...`);
         if(!this.failed){
             this.aborted = true;
             return await this.fail(error, location);
         }
     }
-    async exitTestGroup(childTest){
+    
+    async exitTestGroup(childTest: CanaryTest): Promise<void> {
         this.logVerbose(`Beginning to exit test group "${this.name}" due to a failed child test.`);
         if(!this.failed){
             this.failedChildren.push(childTest);
             return await this.abort();
         }
     }
-    async complete(){
+    async complete(): Promise<void> {
         this.logVerbose(`Beginning to set success state on test "${this.name}".`);
         // Set completion state.
         this.success = true;
@@ -633,13 +712,13 @@ class CanaryTest{
         }
     }
     // To be run when the test was skipped.
-    skip(){
+    skip(): void {
         this.logVerbose(`Skipping test "${this.name}".`);
         this.skipped = true;
         this.endTime = getTime();
     }
     // Invoke onBegin callbacks.
-    async doBeginCallbacks(){
+    async doBeginCallbacks(): Promise<void> {
         if(this.parent){
             this.logVerbose(
                 `Executing parent's ${this.parent.onEachBeginCallbacks.length} ` +
@@ -661,7 +740,7 @@ class CanaryTest{
         }
     }
     // Invoke onEnd and parent's onEachEnd callbacks.
-    async doEndCallbacks(){
+    async doEndCallbacks(): Promise<void> {
         this.logVerbose(
             `Executing ${this.onEndCallbacks.length} onEnd callbacks ` +
             `for test "${this.name}".`
@@ -676,33 +755,37 @@ class CanaryTest{
         }
     }
     // Orphan a child test, i.e. remove it from its parent.
-    orphan(){
+    // Returns true if the removal was successful.
+    // Returns false if the test did not have a parent.
+    orphan(): boolean {
         if(!this.parent){
-            return;
+            return false;
         }
         this.logVerbose(
             `Orphaning test "${this.name}" from its parent ` +
             `"${this.parent.name}".`
         );
-        if(this.parent.removeTest){
+        if(typeof(this.parent.removeTest) === "function"){
             return this.parent.removeTest(this);
         }
-        this.parent = undefined;
+        this.parent = null;
         return false;
     }
     // Remove a child test.
-    removeTest(child){
+    // Returns true if the removal was successful.
+    // Returns false if the input test was not actually a child of this one.
+    removeTest(child: CanaryTest): boolean {
         this.logVerbose(
             `Removing child test "${child.name}" from parent test ` +
             `"${this.name}".`
         );
         const index = this.children.indexOf(child);
         if(index >= 0){
-            this.children[index].parent = undefined;
+            this.children[index].parent = null;
             this.children.splice(index, 1);
             return true;
         }else{
-            for(let searchChild of this.children){
+            for(const searchChild of this.children){
                 if(searchChild.removeTest(child)){
                     return true;
                 }
@@ -711,18 +794,21 @@ class CanaryTest{
         return false;
     }
     // Remove all child tests.
-    removeAllTests(){
+    removeAllTests(): void {
         this.logVerbose(`Removing all child tests from "${this.name}".`);
-        for(let child of this.children){
-            child.parent = undefined;
+        for(const child of this.children){
+            child.parent = null;
         }
         this.children = [];
     }
     // Add a Test instance as a child of this one.
-    addTest(child){
+    addTest(child: CanaryTest): void {
         this.logVerbose(
             `Adding test "${child.name}" as a child of parent "${this.name}".`
         );
+        if(child.parent === this){
+            return;
+        }
         if(!this.isGroup){
             throw new Error("Tests can only be added as children to test groups.");
         }
@@ -732,15 +818,19 @@ class CanaryTest{
         child.parent = this;
         this.children.push(child);
     }
-    // Create a Test instance with the given attributes, then assign it as a
-    // child of this test.
-    test(name, body){
-        // Handle the case where a body function is given but a name is not
-        if(name && name instanceof Function && !body){
-            const ordinal = getOrdinal(this.children.length + 1);
-            body = name;
-            name = `${ordinal} child test`;
-        }
+    
+    // Create a Test instance with the given body, then add it as a
+    // child of this test. A name is automatically assigned.
+    test(body: CanaryTestBody): CanaryTest;
+    // Create a Test instance with the given body, then add it as a
+    // child of this test. A name for the test is explicitly provided.
+    test(name: string, body: CanaryTestBody): CanaryTest;
+    // Implementation for `test` method.
+    test(x: string | CanaryTestBody, y?: CanaryTestBody): CanaryTest {
+        const body: CanaryTestBody = <CanaryTestBody> y || x;
+        const name: string = (typeof(x) === "string" ? x :
+            `${getOrdinal(this.children.length + 1)} child test`
+        );
         // Instantiate the CanaryTest object.
         const test = new CanaryTest(name, body);
         // Add it as a child of this test.
@@ -751,7 +841,7 @@ class CanaryTest{
         test.isSilent = this.isSilent;
         test.isVerbose = this.isVerbose;
         test.logFunction = this.logFunction;
-        // Log a verbose warning for a very possible mistake
+        // Log a warning for a very possible mistake.
         const currentGroup = CanaryTest.currentlyExpandingGroup;
         if(currentGroup && currentGroup !== this){
             this.log(yellow(
@@ -764,28 +854,31 @@ class CanaryTest{
         // All done! Return the produced CanaryTest instance.
         return test;
     }
+    
     // Create a CanaryTest instance that is marked as a test group.
     // Test groups should not have any test code that runs immediately in their
     // body functions; instead they should rely only on adding callbacks and
     // child tests. Their body functions should also be synchronous.
-    group(name, body){
+    group(name: string, body: CanaryTestBody): CanaryTest {
         const testGroup = this.test(name, body);
         testGroup.isGroup = true;
         return testGroup;
     }
+    
     // Create a CanaryTest instance that is marked as a test series.
     // Test groups should not have any test code that runs immediately in their
     // body functions; instead they should rely only on adding callbacks and
     // child tests. Their body functions should also be synchronous.
-    series(name, body){
+    series(name: string, body: CanaryTestBody): CanaryTest {
         const testSeries = this.group(name, body);
         testSeries.isSeries = true;
         return testSeries;
     }
+    
     // Evaluate all tests marked as groups to create a workably complete tree
     // structure of tests. This should only be a necessary step when attempting
     // to filter tests, and even then not in all cases.
-    expandGroups(){
+    expandGroups(): void {
         this.logVerbose(`Expanding test groups belonging to test "${this.name}"...`);
         try{
             if(this.isGroup && !this.isExpandedGroup && this.body){
@@ -804,7 +897,7 @@ class CanaryTest{
                     `child tests after expansion.`
                 );
             }
-            for(let child of this.children){
+            for(const child of this.children){
                 child.expandGroups();
             }
         }catch(error){
@@ -818,7 +911,7 @@ class CanaryTest{
     // Apply a filter function. This means marking tests that did not satisfy
     // the filter, and where none of their direct ancestors or descendents
     // satisfied the filter, so that they will be skipped instead of run.
-    applyFilter(filter){
+    applyFilter(filter: CanaryTestFilter): boolean {
         this.logVerbose(`Applying a filter function to test "${this.name}"...`);
         // Expand groups if not already expanded
         if(this.isGroup && !this.isExpandedGroup){
@@ -829,7 +922,7 @@ class CanaryTest{
             return true;
         }else{
             let anyChildSatisfies = false;
-            for(let child of this.children){
+            for(const child of this.children){
                 if(child.applyFilter(filter)){
                     anyChildSatisfies = true;
                 }
@@ -845,22 +938,23 @@ class CanaryTest{
         }
     }
     // Reset filtering done via applyFilter.
-    resetFilter(){
+    resetFilter(): void {
         this.logVerbose(`Resetting filtered state for test "${this.name}".`);
         this.filtered = false;
-        for(let child of this.children){
+        for(const child of this.children){
             child.resetFilter();
         }
     }
     // Run the test!
-    async run(){
+    async run(): Promise<void> {
         try{
             this.logVerbose(`Beginning to run test "${this.name}".`);
             // Check if the test is supposed to be skipped, or if it has already
             // been marked as aborted or failed.
             if(this.shouldSkip()){
                 this.logVerbose("The test was marked to be skipped.");
-                return this.skip();
+                this.skip();
+                return;
             }else if(this.aborted || this.failed){
                 this.logVerbose("The test was already marked as failed.");
                 return;
@@ -925,14 +1019,15 @@ class CanaryTest{
                         "The test was found to be marked for skipping after " +
                         "evaluating its body function."
                     );
-                    return this.skip();
+                    this.skip();
+                    return;
                 }
             }
             // Run child tests, if any.
             if(this.isGroup && this.children && this.children.length){
                 // Run the child tests in order, from first to last, waiting
                 // for each test to complete before attempting the next.
-                for(let child of this.children){
+                for(const child of this.children){
                     // Run the child test.
                     try{
                         await child.run();
@@ -998,7 +1093,7 @@ class CanaryTest{
     }
     // Get a hierarchical summary string listing every test, its status, and
     // very brief information about any errors that were encountered.
-    getSummary(indent = "  ", prefix = ""){
+    getSummary(indent: string = "  ", prefix: string = ""): string {
         this.logVerbose(`Generating a summary string for test "${this.name}"...`);
         let text = prefix;
         // The test was skipped because it didn't satisfy a filter.
@@ -1042,14 +1137,14 @@ class CanaryTest{
         }
         // List one-line error summaries, if any errors were encountered.
         if(!this.shouldSkip()){
-            for(let error of this.errors){
+            for(const error of this.errors){
                 text += red(`\n${prefix}${indent}Error: ${error.message.split("\n")[0].trim()}`);
                 text += red(`\n${prefix}${indent}${indent}${error.getLine()}`);
             }
         }
         // List status of child tests.
         if(!this.shouldSkip()){
-            for(let child of this.children){
+            for(const child of this.children){
                 text += '\n' + child.getSummary(indent, prefix + indent);
             }
         }
@@ -1058,7 +1153,7 @@ class CanaryTest{
     }
     // Get a string describing the test status, either "passed", "skipped",
     // or "failed".
-    getStatusString(){
+    getStatusString(): string {
         if(this.shouldSkip() || !this.attempted){
             return "skipped";
         }else if(this.success){
@@ -1073,14 +1168,14 @@ class CanaryTest{
     // the given status.
     // The object also has an errors attribute containing all the
     // CanaryTestError objects recorded by this test and every child test.
-    getReport(){
+    getReport(): CanaryTestReport {
         this.logVerbose(`Generating a report object for test "${this.name}"...`);
         const status = this.getStatusString();
         const passed = status === "passed" ? [this] : [];
         const failed = status === "failed" ? [this] : [];
         const skipped = status === "skipped" ? [this] : [];
         const errors = this.errors.slice();
-        for(let child of this.children){
+        for(const child of this.children){
             const results = child.getReport();
             passed.push(...results.passed);
             failed.push(...results.failed);
@@ -1092,33 +1187,13 @@ class CanaryTest{
             failed: failed,
             skipped: skipped,
             errors: errors,
+            unhandledError: null,
         };
     }
     // A one-line, one-size-fits-most way to run the test and all child tests,
     // log the results, then terminate the process with an appropriate status
     // code.
-    // Optional attributes for the optional options argument:
-    // concise: Report only a small amount of information regarding the test
-    //   process and its results, and set all tests to run silently.
-    // silent: Report no information at all regarding the test process.
-    //   When keepAlive is not set, the process exit status code can be used
-    //   to see whether the test was successful or not.
-    // verbose: Report a great deal of information regarding the test process
-    //   and set all tests to run verbosely.
-    // keepAlive: Don't terminate the process after running tests and reporting
-    //   the results.
-    // filter: A filter function to be applied to tests. Only tests which
-    //   satisfy the filter function, or that have a direct ancestor or
-    //   descendant satisfying the filter function, will be run.
-    // names: Run only those tests with a name in this list, or with a direct
-    //   ancestor or descendant with such a name.
-    // tags: Run only those tests with a tag in this list, or with a direct
-    //   ancestor or descendant having such a tag.
-    // paths: Run only those tests implemented in a file path that begins with
-    //   a string in this list, or with a direct ancestor or descendant having
-    //   such a file path. Note that file paths are normalized before comparison.
-    async doReport(options = undefined){
-        let report = undefined;
+    async doReport(options?: CanaryTestReportOptions): CanaryTestReport {
         const log = message => {
             if(!options.silent){
                 return this.getLogFunction()(message);
@@ -1130,9 +1205,9 @@ class CanaryTest{
             // Indicate that tests are about to be run!
             log(`Running tests via Canary...`);
             // When "concise" is set, instruct tests to run silently.
-            if(options.concise){
+            if(options && options.concise){
                 this.silent();
-            }else if(options.verbose){
+            }else if(options && options.verbose){
                 this.verbose();
             }
             // Expand test groups
@@ -1142,22 +1217,22 @@ class CanaryTest{
             // a filter, or parent's parent, etc.
             const filters = [];
             // Heed an explicitly defined filter function
-            if(options.filter){
+            if(options && options.filter){
                 log("Filtering tests by a provided filter function.");
                 filters.push(options.filter);
             }
             // When "names" is set, run tests with a fitting name, or that are
             // a child of a test with such a name.
-            if(options.names){
+            if(options && options.names){
                 log(`Filtering tests by name: "${options.names.join(`", "`)}"`),
                 filters.push(test => options.names.indexOf(test.name) >= 0);
             }
             // When "tags" is set, run tests with one of the given tags, or
             // that are a descendant of such a test.
-            if(options.tags){
+            if(options && options.tags){
                 log(`Filtering tests by tags: "${options.tags.join(`", "`)}"`);
                 filters.push(test => {
-                    for(let tag of options.tags){
+                    for(const tag of options.tags){
                         if(test.tagDictionary[tag]){
                             return true;
                         }
@@ -1167,14 +1242,14 @@ class CanaryTest{
             }
             // When "paths" is set, run tests that are in any of the provided
             // files or directories.
-            if(options.paths){
+            if(options && options.paths){
                 const paths = options.paths.map(
                     path => normalizePath(path)
                 );
                 log(`Filtering tests by file paths: "${paths.join(`", "`)}"`);
                 filters.push(test => {
-                    for(let path of paths){
-                        if(test.filePath && test.filePath.startsWith(path)){
+                    for(const path of paths){
+                        if(test.filePath && test.filePath === path){
                             return true;
                         }
                     }
@@ -1184,7 +1259,7 @@ class CanaryTest{
             // Apply filters, if any were provided.
             if(filters && filters.length){
                 this.applyFilter(test => {
-                    for(let filter of filters){
+                    for(const filter of filters){
                         if(filter(test)){
                             return true;
                         }
@@ -1196,7 +1271,7 @@ class CanaryTest{
             await this.run();
             // Get a report of which tests passed, were skipped, were aborted, etc.
             this.logVerbose("Getting a report...");
-            report = this.getReport();
+            const report = this.getReport();
             // Sum up the total number of tests that were run.
             const totalTests = (
                 report.passed.length + report.failed.length + report.skipped.length
@@ -1208,11 +1283,11 @@ class CanaryTest{
             }else if(report.errors.length){
                 log(red(`Encountered ${report.errors.length} errors.`));
             }
-            if(!options.concise){
+            if(!options || !options.concise){
                 this.logVerbose("Getting a text summary...");
                 log(this.getSummary());
                 this.logVerbose("Showing all errors...");
-                for(let error of report.errors){
+                for(const error of report.errors){
                     const location = error.location;
                     const shouldSkip = (location instanceof CanaryTestCallback ?
                         location.owner.shouldSkip() : location.shouldSkip()
@@ -1238,56 +1313,54 @@ class CanaryTest{
             if(report.failed.length){
                 log(`${report.failed.length} of ${totalTests} tests ${red("failed")}.`);
                 log(red("Status: Failed"));
-                if(!options.keepAlive){
+                if(!options || !options.keepAlive){
                     // Since there were any failed tests, exit with a nonzero status code.
                     this.logVerbose("Some tests failed: Exiting with a nonzero status code.");
                     process.exit(1);
                 }
             }else{
                 log(green("Status: OK"));
-                if(!options.keepAlive){
+                if(!options || !options.keepAlive){
                     // Since there were no failed tests, exit with a zero status code.
                     this.logVerbose("Tests ran without errors: Exiting with a zero status code.");
                     process.exit(0);
                 }
             }
+            return report;
         }catch(error){
             // Report an unhandled error and exit with a nonzero status code.
             log(red("Encountered an unhandled error while running tests."));
             log(red(error.stack));
             log(red("Status: Failed"));
-            if(!options.keepAlive){
+            if(!options || !options.keepAlive){
                 this.logVerbose("Test runner failed: Exiting with a nonzero status code.");
                 process.exit(1);
             }
+            return {
+                unhandledError: error,
+                passed: [], failed: [], skipped: [], errors: [],
+            };
         }
-        return report;
     }
 }
 
-CanaryTest.Callback = CanaryTestCallback;
-CanaryTest.Error = CanaryTestError;
+export namespace makeDefaultGroup {
+    // Convenience reference to the CanaryTest constructor
+    export type Test = CanaryTest;
+    // Convenience reference to the CanaryTestCallback constructor
+    export type Callback = CanaryTestCallback;
+    // Convenience reference to the CanaryTestError constructor
+    export type Error = CanaryTestError;
+    // Convenience function for creating a new test group with no parent
+    export const Group = CanaryTest.Group;
+    // Convenience function for creating a new test series with no parent
+    export const Series = CanaryTest.Series;
+}
 
-const canary = new CanaryTest("Canary");
-canary.isGroup = true;
+export function makeDefaultGroup(
+    name?: string, body?: CanaryTestBody
+): CanaryTest {
+    return CanaryTest.Group(name || "Canary", body);
+}
 
-canary.Callback = CanaryTestCallback;
-canary.Error = CanaryTestError;
-canary.Test = CanaryTest;
-
-canary.Group = function(...args){
-    const group = new CanaryTest(...args);
-    group.isGroup = true;
-    return group;
-};
-
-canary.Series = function(...args){
-    const series = new CanaryTest(...args);
-    series.isGroup = true;
-    series.isSeries = true;
-    return series;
-};
-
-CanaryTest.currentlyExpandingGroup = undefined;
-
-module.exports = canary;
+export default makeDefaultGroup;
