@@ -15,11 +15,6 @@ export enum CanaryTestCallbackType {
     onEachEnd = "onEachEnd",
 }
 
-export namespace CanaryTestCallback {
-    export type Body = CanaryTestCallbackBody;
-    export type Type = CanaryTestCallbackType;
-}
-
 export class CanaryTestCallback{
     type: CanaryTestCallbackType;
     owner: CanaryTest;
@@ -50,11 +45,12 @@ export class CanaryTestCallback{
     }
 }
 
-export type CanaryTestErrorLocation = CanaryTest | CanaryTestCallback;
-
-export namespace CanaryTestError {
-    export type Location = CanaryTestErrorLocation;
+export namespace CanaryTestCallback {
+    export type Body = CanaryTestCallbackBody;
+    export type Type = CanaryTestCallbackType;
 }
+
+export type CanaryTestErrorLocation = CanaryTest | CanaryTestCallback;
 
 export class CanaryTestError{
     test: CanaryTest;
@@ -123,6 +119,10 @@ export class CanaryTestError{
     }
 }
 
+export namespace CanaryTestError {
+    export type Location = CanaryTestErrorLocation;
+}
+
 // Function types accepted for a CanaryTest body function.
 export type CanaryTestBody = (
     ((test: CanaryTest) => void) | ((test: CanaryTest) => Promise<any>)
@@ -172,15 +172,7 @@ export interface CanaryTestReportOptions {
     paths?: string[];
 }
 
-export namespace CanaryTest {
-    export type Body = CanaryTestBody;
-    export type Callback = CanaryTestCallback;
-    export type Error = CanaryTestError;
-    export type Filter = CanaryTestFilter;
-    export type Report = CanaryTestReport;
-}
-
-class CanaryTest{
+export class CanaryTest{
     // Keep track of the test group currently being expanded.
     // Used to output warning messages if something looks unusual.
     static currentlyExpandingGroup: null | CanaryTest = null;
@@ -1357,23 +1349,21 @@ class CanaryTest{
     }
 }
 
-export function makeDefaultGroup(
-    name?: string, body?: CanaryTestBody
-): CanaryTest {
-    return CanaryTest.Group(name || "Canary", body);
-}
-
-export namespace makeDefaultGroup {
-    // Convenience reference to the CanaryTest constructor
-    export type Test = CanaryTest;
-    // Convenience reference to the CanaryTestCallback constructor
+export namespace CanaryTest {
+    // Type definitions
+    export type Body = CanaryTestBody;
     export type Callback = CanaryTestCallback;
-    // Convenience reference to the CanaryTestError constructor
     export type Error = CanaryTestError;
-    // Convenience function for creating a new test group with no parent
-    export const Group = CanaryTest.Group;
-    // Convenience function for creating a new test series with no parent
-    export const Series = CanaryTest.Series;
+    export type Filter = CanaryTestFilter;
+    export type Report = CanaryTestReport;
+    export type Test = CanaryTest;
+    // Constructor references
+    export const Callback = CanaryTestCallback;
+    export const Error = CanaryTestError;
 }
 
-export default makeDefaultGroup;
+export type Test = CanaryTest;
+export const Group = CanaryTest.Group;
+export const Series = CanaryTest.Series;
+
+export default CanaryTest;

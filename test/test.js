@@ -1,4 +1,5 @@
-const canary = require("./canary");
+const CanaryTest = require("../dist/canary").default;
+const canary = require("../dist/canary").Group("Canary Test");
 const assert = require("assert");
 
 // Extremely basic test runner to test the test runner
@@ -29,13 +30,13 @@ async function runTests(){
 addTest(
     async function testReferencesToCanaryClasses(){
         // Check CanaryTest class
-        assert(canary instanceof canary.Test);
+        assert(canary instanceof CanaryTest);
         // Check CanaryTestCallback class
         const callback = canary.onBegin(() => {});
-        assert(callback instanceof canary.Callback);
+        assert(callback instanceof CanaryTest.Callback);
         // Check CanaryTestError class
         const error = canary.addError(new Error("!!"));
-        assert(error instanceof canary.Error);
+        assert(error instanceof CanaryTest.Error);
     }
 );
 
@@ -58,7 +59,7 @@ addTest(
         assert(simpleSkippedTest.skipped);
         assert(simpleFailingTest.aborted);
         assert(simpleFailingTest.getErrors().length === 1);
-        assert(simpleFailingTest.getErrors()[0] instanceof canary.Error);
+        assert(simpleFailingTest.getErrors()[0] instanceof CanaryTest.Error);
         assert(simpleFailingTest.getErrors()[0].message === "Simple test failure");
         assert(canary.getStatusString() === "failed");
     }
@@ -83,7 +84,7 @@ addTest(
         assert(simpleSkippedTest.skipped);
         assert(simpleFailingTest.aborted);
         assert(simpleFailingTest.getErrors().length === 1);
-        assert(simpleFailingTest.getErrors()[0] instanceof canary.Error);
+        assert(simpleFailingTest.getErrors()[0] instanceof CanaryTest.Error);
         assert(simpleFailingTest.getErrors()[0].message === "Simple test failure");
         assert(canary.getStatusString() === "failed");
     }
@@ -276,7 +277,7 @@ addTest(
         await canary.doReport({
             keepAlive: true,
             silent: true,
-            paths: [__dirname],
+            paths: [__filename],
         });
         assert(passingTest.success);
         assert(taggedTestGroup.success);
@@ -557,7 +558,7 @@ addTest(
                 // do nothing
             });
         });
-        const isolatedTest = new canary.Test("Some test outside the test tree",
+        const isolatedTest = new CanaryTest("Some test outside the test tree",
             () => {}
         );
         // Run canary
@@ -571,7 +572,7 @@ addTest(
         assert(testGroup.getParent() === canary);
         assert(firstTest.getParent() === testGroup);
         assert(secondTest.getParent() === testGroup);
-        assert(isolatedTest.getParent() === undefined);
+        assert(isolatedTest.getParent() === null);
         // Can't remove a test that isn't in the tree
         assert(!canary.removeTest(isolatedTest));
         assert(!testGroup.removeTest(testGroup));
@@ -697,19 +698,19 @@ addTest(
 addTest(
     async function testInstantiateDisconnectedTests(){
         // Create a test that is not a member of the root tree
-        const test = new canary.Test("some test");
+        const test = new CanaryTest("some test");
         assert(test);
         assert(!test.isGroup);
         assert(!test.isSeries);
         assert(canary.getChildren().length === 0);
         // Create a group that is not a member of the root tree
-        const group = canary.Group("some group");
+        const group = CanaryTest.Group("some group");
         assert(group);
         assert(group.isGroup);
         assert(!group.isSeries);
         assert(canary.getChildren().length === 0);
         // Create a series that is not a member of the root tree
-        const series = canary.Series("some series");
+        const series = CanaryTest.Series("some series");
         assert(series);
         assert(series.isGroup);
         assert(series.isSeries);

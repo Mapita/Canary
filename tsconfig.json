@@ -9,8 +9,8 @@
         "experimentalDecorators": true,
         "downlevelIteration": true,
         "strict": true,
-        "rootDir": ".",
-        "baseUrl": ".",
+        "rootDir": "./src",
+        "baseUrl": "./src",
     },
     "include": [
         "src/**/*.ts",
