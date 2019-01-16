@@ -1,9 +1,13 @@
 {
   "name": "canary-test",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Write and run automated tests in JavaScript code.",
   "keywords": [
-    "test", "testing", "unit test", "automated test", "stability"
+    "test",
+    "testing",
+    "unit test",
+    "automated test",
+    "stability"
   ],
   "homepage": "https://github.com/Mapita/Canary",
   "license": "MIT",
@@ -34,7 +38,11 @@
     }
   ],
   "scripts": {
-    "test": "node test.js && node leftPad.js",
+    "test": "node test/test.js && node test/leftPad.js",
     "prepublish": "npm test"
+  },
+  "devDependencies": {
+    "@types/node": "^10.12.18",
+    "typescript": "^3.2.2"
   }
 }
