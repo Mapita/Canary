@@ -1,5 +1,6 @@
 import {red, green, yellow} from "./util";
-import {getTime, getOrdinal, getCallerLocation, normalizePath} from "./util";
+import {getTime, getOrdinal, isFiniteNumber} from "./util";
+import {getCallerLocation, normalizePath} from "./util";
 
 // Function types accepted for a test callback body.
 export type CanaryTestCallbackBody = (
@@ -7,7 +8,7 @@ export type CanaryTestCallbackBody = (
 );
 
 // Enumeration of valid test callback types.
-export enum CanaryTestCallbackType: string {
+export enum CanaryTestCallbackType {
     onBegin = "onBegin",
     onEnd = "onEnd",
     onEachBegin = "onEachBegin",
@@ -70,17 +71,17 @@ export class CanaryTestError{
     // Access the error object's stack trace.
     // Returns an empty string if no stack trace was available.
     get stack(): string {
-        return this.error ? this.error.stack : "";
+        return (this.error && this.error.stack) || "";
     }
     // Access the error object's message string.
     // Returns an empty string if no message string was available.
     get message(): string {
-        return this.error ? this.error.message : "";
+        return (this.error && this.error.message) || "";
     }
     // Access the error object's name string.
     // Returns an empty string if no error name was available.
     get name(): string {
-        return this.error ? this.error.name : "";
+        return (this.error && this.error.name) || "";
     }
     // Get the original Error instance that was recorded.
     getError(): Error {
@@ -188,7 +189,7 @@ class CanaryTest{
     name: string = "";
     // A body function for the test. It is run as part of test initialization,
     // or it may simply contain the test's normal code.
-    body: CanaryTestBody = null;
+    body: CanaryTestBody;
     // This flag is set to true when the test is initialized (meaning it is
     // about to be attempted). Skipped tests will not have this flag changed
     // from false.
@@ -262,7 +263,7 @@ class CanaryTest{
     // An array of onEachEnd callbacks.
     onEachEndCallbacks: CanaryTestCallback[] = [];
     // A dictionary of tags assigned to this test in particular.
-    tagDictionary: ([key: string]: boolean) = {};
+    tagDictionary: {[key: string]: boolean} = {};
     // Logging function determining what should happen to logged messages
     logFunction: Function = console.log;
     // The location where this test was defined. Blank string if unknown.
@@ -278,7 +279,7 @@ class CanaryTest{
     // body function.
     constructor(name: string, body?: CanaryTestBody) {
         this.name = name;
-        this.body = body || (test: CanaryTest) => {};
+        this.body = body || ((test: CanaryTest) => {});
         const location = getCallerLocation();
         if(location){
             const locationParts = location.split(":");
@@ -286,9 +287,9 @@ class CanaryTest{
             this.lineInFile = parseInt(locationParts[1]);
             this.columnInLine = parseInt(locationParts[2]);
         }else{
-            this.filePath = undefined;
-            this.lineInFile = undefined;
-            this.columnInLine = undefined;
+            this.filePath = null;
+            this.lineInFile = null;
+            this.columnInLine = null;
         }
     }
     
@@ -467,19 +468,19 @@ class CanaryTest{
     // Get how long the test took to run, in seconds
     // Returns 0 if the test hasn't run yet.
     getDurationSeconds(): number {
-        if(this.startTime === undefined || this.endTime === undefined){
+        if(!isFiniteNumber(this.startTime) || !isFiniteNumber(this.endTime)){
             return 0;
         }else{
-            return 0.001 * (this.endTime - this.startTime);
+            return 0.001 * (<number> this.endTime - <number> this.startTime);
         }
     }
     // Get how long the test took to run, in milliseconds
     // Returns 0 if the test hasn't run yet.
     getDurationMilliseconds(): number {
-        if(this.startTime === undefined || this.endTime === undefined){
+        if(!isFiniteNumber(this.startTime) || !isFiniteNumber(this.endTime)){
             return 0;
         }else{
-            return this.endTime - this.startTime;
+            return <number> this.endTime - <number> this.startTime;
         }
     }
     // True when at least one error has been encountered so far in attempting
@@ -540,7 +541,8 @@ class CanaryTest{
     onBegin(
         x: string | CanaryTestCallbackBody, y?: CanaryTestCallbackBody
     ): CanaryTestCallback {
-        return this.addCallback("onBegin", this.onBeginCallbacks,
+        return this.addCallback(
+            CanaryTestCallbackType.onBegin, this.onBeginCallbacks,
             typeof(x) === "string" ? x : "", <CanaryTestCallbackBody> y || x
         );
     }
@@ -552,7 +554,8 @@ class CanaryTest{
     onEnd(
         x: string | CanaryTestCallbackBody, y?: CanaryTestCallbackBody
     ): CanaryTestCallback {
-        return this.addCallback("onEnd", this.onEndCallbacks,
+        return this.addCallback(
+            CanaryTestCallbackType.onEnd, this.onEndCallbacks,
             typeof(x) === "string" ? x : "", <CanaryTestCallbackBody> y || x
         );
     }
@@ -564,7 +567,8 @@ class CanaryTest{
     onEachBegin(
         x: string | CanaryTestCallbackBody, y?: CanaryTestCallbackBody
     ): CanaryTestCallback {
-        return this.addCallback("onEachBegin", this.onEachBeginCallbacks,
+        return this.addCallback(
+            CanaryTestCallbackType.onEachBegin, this.onEachBeginCallbacks,
             typeof(x) === "string" ? x : "", <CanaryTestCallbackBody> y || x
         );
     }
@@ -576,7 +580,8 @@ class CanaryTest{
     onEachEnd(
         x: string | CanaryTestCallbackBody, y?: CanaryTestCallbackBody
     ): CanaryTestCallback {
-        return this.addCallback("onEachEnd", this.onEachEndCallbacks,
+        return this.addCallback(
+            CanaryTestCallbackType.onEachEnd, this.onEachEndCallbacks,
             typeof(x) === "string" ? x : "", <CanaryTestCallbackBody> y || x
         );
     }
@@ -584,7 +589,7 @@ class CanaryTest{
     // Internal helper method to run a list of callbacks.
     async runCallbacks(
         exitOnError: boolean, callbackList: CanaryTestCallback[]
-    ): void {
+    ): Promise<void> {
         // Bail out if no callback list was actually provided.
         if(!callbackList){
             return;
@@ -598,12 +603,12 @@ class CanaryTest{
             // When the exitOnError flag is set, check that the test has not
             // entered any kind of error or abort state before going through
             // with the next callback.
-            if((this.aborted || this.failure || this.anyErrors()) && this.exitOnError){
+            if((this.aborted || this.failed || this.anyErrors()) && exitOnError){
                 return;
             }
             // Actually attempt the callback.
             try{
-                const result = callback.body.call(this, this);
+                const result: any = callback.body.call(this, this);
                 // If the callback returned a promise, then wait for it to resolve.
                 if(result instanceof Promise){
                     await result;
@@ -656,7 +661,7 @@ class CanaryTest{
         this.success = false;
         // If the function arguments included an error and an optional location,
         // then add this information to the list of encountered errors.
-        if(error){
+        if(error && location){
             this.addError(error, location);
         }
         // Log a message stating that the test is being aborted.
@@ -673,7 +678,11 @@ class CanaryTest{
         this.logVerbose(`Beginning to abort test "${this.name}"...`);
         if(!this.failed){
             this.aborted = true;
-            return await this.fail(error, location);
+            if(error && location){
+                return await this.fail(error, location);
+            }else{
+                return await this.fail();
+            }
         }
     }
     
@@ -1171,12 +1180,12 @@ class CanaryTest{
     getReport(): CanaryTestReport {
         this.logVerbose(`Generating a report object for test "${this.name}"...`);
         const status = this.getStatusString();
-        const passed = status === "passed" ? [this] : [];
-        const failed = status === "failed" ? [this] : [];
-        const skipped = status === "skipped" ? [this] : [];
-        const errors = this.errors.slice();
+        const passed: CanaryTest[] = status === "passed" ? [this] : [];
+        const failed: CanaryTest[] = status === "failed" ? [this] : [];
+        const skipped: CanaryTest[] = status === "skipped" ? [this] : [];
+        const errors: CanaryTestError[] = this.errors.slice();
         for(const child of this.children){
-            const results = child.getReport();
+            const results: CanaryTestReport = child.getReport();
             passed.push(...results.passed);
             failed.push(...results.failed);
             skipped.push(...results.skipped);
@@ -1193,9 +1202,11 @@ class CanaryTest{
     // A one-line, one-size-fits-most way to run the test and all child tests,
     // log the results, then terminate the process with an appropriate status
     // code.
-    async doReport(options?: CanaryTestReportOptions): CanaryTestReport {
-        const log = message => {
-            if(!options.silent){
+    async doReport(
+        options?: CanaryTestReportOptions
+    ): Promise<CanaryTestReport> {
+        const log = (message: string) => {
+            if(!options || !options.silent){
                 return this.getLogFunction()(message);
             }
         };
@@ -1215,7 +1226,7 @@ class CanaryTest{
             // Construct a list of filter functions. Only run tests which
             // satisfy at least one of these filters, or whose parent satisifies
             // a filter, or parent's parent, etc.
-            const filters = [];
+            const filters: CanaryTestFilter[] = [];
             // Heed an explicitly defined filter function
             if(options && options.filter){
                 log("Filtering tests by a provided filter function.");
@@ -1224,15 +1235,17 @@ class CanaryTest{
             // When "names" is set, run tests with a fitting name, or that are
             // a child of a test with such a name.
             if(options && options.names){
-                log(`Filtering tests by name: "${options.names.join(`", "`)}"`),
-                filters.push(test => options.names.indexOf(test.name) >= 0);
+                log(`Filtering tests by name: "${options.names.join(`", "`)}"`);
+                const names = options.names;
+                filters.push(test => names.indexOf(test.name) >= 0);
             }
             // When "tags" is set, run tests with one of the given tags, or
             // that are a descendant of such a test.
             if(options && options.tags){
                 log(`Filtering tests by tags: "${options.tags.join(`", "`)}"`);
+                const tags = options.tags;
                 filters.push(test => {
-                    for(const tag of options.tags){
+                    for(const tag of tags){
                         if(test.tagDictionary[tag]){
                             return true;
                         }
@@ -1344,6 +1357,12 @@ class CanaryTest{
     }
 }
 
+export function makeDefaultGroup(
+    name?: string, body?: CanaryTestBody
+): CanaryTest {
+    return CanaryTest.Group(name || "Canary", body);
+}
+
 export namespace makeDefaultGroup {
     // Convenience reference to the CanaryTest constructor
     export type Test = CanaryTest;
@@ -1355,12 +1374,6 @@ export namespace makeDefaultGroup {
     export const Group = CanaryTest.Group;
     // Convenience function for creating a new test series with no parent
     export const Series = CanaryTest.Series;
-}
-
-export function makeDefaultGroup(
-    name?: string, body?: CanaryTestBody
-): CanaryTest {
-    return CanaryTest.Group(name || "Canary", body);
 }
 
 export default makeDefaultGroup;

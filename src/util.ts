@@ -1,7 +1,7 @@
 // Helpers to set text colors
-export const red = text => '\u001b[91m' + text + '\u001b[39m';
-export const green = text => '\u001b[92m' + text + '\u001b[39m';
-export const yellow = text => '\u001b[93m' + text + '\u001b[39m';
+export const red = (text: any) => '\u001b[91m' + text + '\u001b[39m';
+export const green = (text: any) => '\u001b[92m' + text + '\u001b[39m';
+export const yellow = (text: any) => '\u001b[93m' + text + '\u001b[39m';
 
 // Helper function to retrieve the current time in milliseconds.
 export function getTime(): number {
@@ -54,9 +54,8 @@ export function getCallerLocation(): string {
                 }
             }
         }
-    }else{
-        return "";
     }
+    return "";
 }
 
 // Helper function to normalize a file path for comparison.
@@ -106,4 +105,9 @@ export function normalizePath(path: string): string {
     }
     // All done!
     return result;
+}
+
+// True when the input is a finite number.
+export function isFiniteNumber(value: any): boolean {
+    return typeof(value) === "number" && Number.isFinite(<number> value);
 }
