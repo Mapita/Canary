@@ -1,6 +1,16 @@
-The [**CanaryTestError**](api-error-class.md) class is used to record errors encountered while attempting tests using Canary. It can be accessed via [**canary.Error**](api-error-class.md).
+The [**CanaryTestError**](api-error-class.md) class is used to record errors encountered while attempting tests using Canary. It can be accessed via [**CanaryTest.Error**](api-error-class.md) or imported directly.
 
 This class is primarily for internal usage by Canary. Usually, user code should not need to reference or interact with this class. However, when writing custom code to report test status and error information, it may be necessary to interact with the instances of this class that were created to record errors that were encountered while running tests.
+
+
+``` js
+const CanaryTestError = require("canary-test").CanaryTest.Error;
+```
+
+``` js
+import {CanaryTestError} from "canary-test";
+```
+
 
 # name
 

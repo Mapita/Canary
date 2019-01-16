@@ -16,7 +16,7 @@ Here's a simple example of JavaScript code tested using Canary:
 
 ``` js
 // This library
-const canary = require("canary-test");
+const canary = require("canary-test").Group("leftPad");
 // Node's built-in assertion library
 const assert = require("assert");
 
@@ -45,7 +45,7 @@ canary.group("leftPad", function(){
 These tests could then be run with a single function call. This call might be placed in its own JavaScript file that runs when when you `npm run test`, or it might be placed in your main application code behind a command-line arugment switch, or any way that works best for you.
 
 ``` js
-require("canary-test").doReport();
+canary.doReport();
 ```
 
 And this would output to the console...

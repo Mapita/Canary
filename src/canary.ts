@@ -1353,9 +1353,12 @@ export namespace CanaryTest {
     // Type definitions
     export type Body = CanaryTestBody;
     export type Callback = CanaryTestCallback;
+    export type CallbackType = CanaryTestCallbackType;
+    export type CallbackBody = CanaryTestCallbackBody;
     export type Error = CanaryTestError;
     export type Filter = CanaryTestFilter;
     export type Report = CanaryTestReport;
+    export type ReportOptions = CanaryTestReportOptions;
     export type Test = CanaryTest;
     // Constructor references
     export const Callback = CanaryTestCallback;
