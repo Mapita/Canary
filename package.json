@@ -12,12 +12,13 @@
   "homepage": "https://github.com/Mapita/Canary",
   "license": "MIT",
   "dependencies": {},
-  "main": "canary.js",
+  "main": "dist/canary.js",
+  "types": "dist/canary.d.ts",
   "files": [
     "readme.md",
     "LICENSE",
     "package.json",
-    "canary.js"
+    "dist/*"
   ],
   "repository": {
     "type": "git",
