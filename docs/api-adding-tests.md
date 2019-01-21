@@ -86,6 +86,31 @@ canary.group("Example test group", function(){
 });
 ```
 
+# Group (static)
+
+Create a new test group without any parent group. Where the [**group**](api-adding-tests.md#group) method adds a new test group as a child of another group, this static method of the [**CanaryTest**](api-introduction.md) class can be used to create a detached test group.
+
+Normally, you will want to acquire a shared root [**CanaryTest**](api-introduction.md) instance by invoking this method upon importing the package.
+
+``` js
+const canary = require("canary-test").Group("My Test Group");
+```
+
+**Arguments:** `({string} name, {function} body)` _or_ `({function} body)`
+
+The body function should be synchronous. If it happens to return a [**Promise**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) then, unlike a test instantiated with the [**test**](api-adding-tests.md#test) method, Canary will not wait for that promise to be resolved or rejected.
+
+When the body function is called, both [**this**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this) and the first argument will refer to the test to which the function belongs.
+
+**Returns:** The newly-created [**CanaryTest**](api-introduction.md) instance.
+
+**Examples:**
+
+``` js
+const Canary = require("canary-test");
+const testGroup = Canary.Group("My Test Group");
+```
+
 # series
 
 Add a test series to a parent test or series. A test series is a special kind of test group that will always run its child tests in the order they were added, and that will abort at the first failure of any child test.
@@ -111,4 +136,25 @@ canary.series("Example test series", function(){
         assert("world" === "world");
     });
 });
+```
+
+# Series (static)
+
+Create a new test series without any parent group. Where the [**series**](api-adding-tests.md#series) method adds a new test series as a child of another group, this static method of the [**CanaryTest**](api-introduction.md) class can be used to create a detached test series.
+
+This function is similar to [**CanaryTest.Group**](api-adding-tests.md#group-static). The difference is that the tests belonging to the test group returned by this function will run in series, and execution of the test group will terminate as soon as any test fails.
+
+**Arguments:** `({string} name, {function} body)` _or_ `({function} body)`
+
+The body function should be synchronous. If it happens to return a [**Promise**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) then, unlike a test instantiated with the [**test**](api-adding-tests.md#test) method, Canary will not wait for that promise to be resolved or rejected.
+
+When the body function is called, both [**this**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this) and the first argument will refer to the test to which the function belongs.
+
+**Returns:** The newly-created [**CanaryTest**](api-introduction.md) instance.
+
+**Examples:**
+
+``` js
+const Canary = require("canary-test");
+const testSeries = Canary.Series("My Test Series");
 ```

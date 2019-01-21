@@ -1,36 +1,55 @@
 # Using Canary
 
-Canary's API is the interface used to write and to run automated JavaScript tests. It is built on the [**CanaryTest**](api-introduction.md) class and on the global instance of this class acquired by importing the Canary package. By convention, this global instance should be referred to as [**canary**](api-introduction.md).
+Canary's API is the interface used to write and to run automated JavaScript tests. It is built on the [**CanaryTest**](api-introduction.md) class. You can acquire an instance to be shared by the automated tests in your package by using the [**CanaryTest.Group**](api-adding-tests.md#group-static) function. By convention, this instance should be referred to as [**canary**](api-introduction.md).
 
 ``` js
-const canary = require("canary-test");
+const canary = require("canary-test").Group("My Canary Instance");
+```
+
+``` js
+import CanaryTest from "canary-test";
+const canary = CanaryTest.Group("My Canary Instance");
+```
+
+You can add tests and groups of tests to your shared Canary instance using the [**test**](api-adding-tests.md#test), [**group**](api-adding-tests.md#group), and [**series**](api-adding-tests.md#series) methods.
+
+``` js
+canary.test("Example test", function(){
+    assert(2 + 2 === 4);
+});
+```
+
+You can run the tests that have been attached to this shared instance by calling its [**doReport**](api-running-tests.md#doreport) method. With the default options, this method will log detailed status messages, then it will immediately terminate the process upon completion. The process will exit with an error status code if any test failed, or with a success status code if no tests failed.
+
+``` js
+canary.doReport();
 ```
 
 # The Test Class
 
-The [**CanaryTest**](api-introduction.md) class can be referred to via [**canary.Test**](api-introduction.md). Although most of the work done with Canary will be using the methods of instances of this class, it should not normally be necessary to instantiate a [**CanaryTest**](api-introduction.md) yourself.
+The [**CanaryTest**](api-introduction.md) class is the default exported value of the canary-test package. Although most of the work done with Canary will be using the methods of instances of this class, it should not normally be necessary to instantiate a [**CanaryTest**](api-introduction.md) yourself.
 
 ``` js
-assert(canary instanceof canary.Test);
+assert(canary instanceof CanaryTest);
 ```
 
-There are also functions available for creating disconnected test groups and series in a similar way:
+There are also functions available for creating disconnected test groups and series in a similar way, specifically [**CanaryTest.Group**](api-adding-tests.md#group-static) and [**CanaryTest.Series**](api-adding-tests.md#series-static):
 
 ``` js
-const someGroup = canary.Group("Some group");
+const someGroup = CanaryTest.Group("Some group");
 assert(someGroup.isGroup);
 ```
 
 ``` js
-const someSeries = canary.Series("Some series");
+const someSeries = CanaryTest.Series("Some series");
 assert(someSeries.isSeries);
 ```
 
-The library also utilizes [**CanaryTestCallback**](api-callback-class.md) and [**CanaryTestError**](api-error-class.md) classes. These classes can be referred to with [**canary.Callback**](api-callback-class.md) and [**canary.Error**](api-error-class.md), respectively. These classes are mainly for internal use and, normally, it will not be necessary to work with them directly.
+The library also utilizes [**CanaryTestCallback**](api-callback-class.md) and [**CanaryTestError**](api-error-class.md) classes. These classes can be referred to with [**CanaryTest.Callback**](api-callback-class.md) and [**CanaryTest.Error**](api-error-class.md), respectively. These classes are mainly for internal use and, normally, it will not be necessary to work with them directly.
 
 # List of Attributes
 
-Here is an exhaustive list of documented [**CanaryTest**](api-introduction.md) methods and other attributes. Attributes not documented here are liable to change often and without notice; it is not recommended to rely on undocumented implementation details.
+Here is an exhaustive list of documented [**CanaryTest**](api-introduction.md) methods and other instance attributes. Attributes not documented here are liable to change often and without notice; it is not recommended to rely on undocumented implementation details.
 
 - [**abort**](api-advanced-usage.md#abort)
 - [**aborted**](api-status-attributes.md#aborted)

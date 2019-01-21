@@ -15,7 +15,7 @@ These are the attributes of the options object which the [**doReport**](api-runn
 - `{function} filter`: A function which accepts a [**CanaryTest**](api-introduction.md) instance and returns a truthy value when the test should be run and a falsey value when the test should be skipped.
 - `{array} names`: An array of names to filter tests by; only tests with one of these names or belonging to a group with one of these names will be run.
 - `{array} tags`: An array of [tags](api-tagging-tests.md) to filter tests by; only tests with one of these tags or belonging to a group with one of these tags will be run. Tags can be added to tests using the [**tags**](api-tagging-tests.md#tags) method.
-- `{array} paths`: An array of file paths to filter tests by; only tests declared in a file whose path begins with this string, or belonging to a group with a matching file path, will be run.
+- `{array} paths`: An array of file paths to filter tests by; only tests declared in a file whose path matches one of these strings, or belonging to a group with a matching file path, will be run. Paths are case-sensitive, and they are normalized before comparison.
 
 When a filter applies positively to a test, that test's containing group, and its containing group, and so on will be run (though not necessarily their other child tests), and all children of the matching test will be run.
 
@@ -28,10 +28,11 @@ Note that the returned object is exactly the same as if [**getReport**](api-runn
 **Examples:**
 
 ``` js
-// A module containing a leftPad implementation and unit tests
-require("leftPad.js");
+// A module containing a leftPad implementation and unit tests, exporting
+// the CanaryTest instance to which the tests are attached.
+const canary = require("leftPad.js").canary;
 // Run tests, output a report, then terminate with an appropriate status code
-require("canary-test").doReport();
+canary.doReport();
 ```
 
 # getReport
@@ -62,7 +63,7 @@ Example of a string returned by a call to [**getSummary**](api-running-tests.md#
 
 # run
 
-Run the test asynchronously.
+Run the test asynchronously. In the case of a test group or series, child tests will also be run.
 
 **Returns:** A [**Promise**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) which is resolved when the test is completed. This promise should not ever be rejected, even in the case of a test failure.
 

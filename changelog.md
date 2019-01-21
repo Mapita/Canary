@@ -1,3 +1,16 @@
+# v1.1.0
+
+Released 16 January 2019.
+
+- Add typings for TypeScript; include definitions in the package.
+- Beware changes to API due to typing and switching to ES6 modules.
+
+# v1.0.3
+
+Released 19 July 2018.
+
+- Fix issue reporting errors thrown in callbacks during `doReport`.
+
 # v1.0.2
 
 Released 7 May 2018.

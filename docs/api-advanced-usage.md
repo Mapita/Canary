@@ -11,14 +11,16 @@ The [**CanaryTest**](api-introduction.md) class constructor can be used to insta
 **Examples:**
 
 ``` js
-const test = new canary.Test("Example test", function(){
+import {CanaryTest} from "canary-test";
+
+const test = new CanaryTest("Example test", function(){
     assert(true);
 });
 ```
 
 # getTitle
 
-Get an identifying title for this test. A test's title is its name, preceded by the name of its parent test, preceded by its parent's name, and so on.
+Get an identifying title for this test. A test's title is its name, preceded by the name of its parent test, preceded by the name of its grandparent test, and so on.
 
 **Returns:** A string, representing a title that can be used to identify this test.
 
@@ -50,7 +52,7 @@ Get the length of time taken to run this test, in milliseconds.
 
 Add an error to the test's list of recorded errors.
 
-The method requires an [**Error**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object and optionally accepts another argument indicating the test or callback where the error occurred.
+The method requires an [**Error**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object and an indication of the test or callback where the error occurred.
 
 **Arguments:** `({Error} error, {CanaryTest|CanaryTestCalback} location)`
 
@@ -62,7 +64,7 @@ Abort the test and mark it as failed.
 
 [**onEnd**](api-group-callbacks.md#onend), and [**onEachEnd**](api-group-callbacks.md#oneachend) callbacks will be executed upon calling this method.
 
-The method optionally accepts information about the error that resulted in the test being aborted. The first argument, if provided, must be an [**Error**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object, and the second argument can be used to indicate the test or callback where the error occured. (This is the same as with the [addError**](api-advanced-usage.md#adderror) method.)
+The method optionally accepts information about the error that resulted in the test being aborted. The first argument, if provided, must be an [**Error**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object, and the second argument can be used to indicate the test or callback where the error occured. (This is the same as with the [**addError**](api-advanced-usage.md#adderror) method.)
 
 **Arguments:** `({Error} error, {CanaryTest|CanaryTestCalback} location)`
 
@@ -72,7 +74,7 @@ Abort the test as failed, though not as aborted.
 
 This method should only be called as the test is completed, since it immediately executes any [**onEnd**](api-group-callbacks.md#onend), and [**onEachEnd**](api-group-callbacks.md#oneachend) callbacks.
 
-The method optionally accepts information about the error that caused the test to fail. The first argument, if provided, must be an [**Error**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object, and the second argument can be used to indicate the test or callback where the error occured. (This is the same as with the [addError**](api-advanced-usage.md#adderror) method.)
+The method optionally accepts information about the error that caused the test to fail. The first argument, if provided, must be an [**Error**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object, and the second argument can be used to indicate the test or callback where the error occured. (This is the same as with the [**addError**](api-advanced-usage.md#adderror) method.)
 
 **Arguments:** `({Error} error, {CanaryTest|CanaryTestCalback} location)`
 
