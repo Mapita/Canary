@@ -9,7 +9,7 @@ Mark a test as "todo". Tests with this flag will be skipped and their "todo" sta
 **Examples:**
 
 ``` js
-canary.test("An incomplete test that will not be reported as a failure", function(){
+canary.test("Incomplete tests are not reported as failures", function(){
     this.todo();
     assert(false);
 });

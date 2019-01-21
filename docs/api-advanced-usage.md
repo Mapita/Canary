@@ -20,7 +20,7 @@ const test = new CanaryTest("Example test", function(){
 
 # getTitle
 
-Get an identifying title for this test. A test's title is its name, preceded by the name of its parent test, preceded by its parent's name, and so on.
+Get an identifying title for this test. A test's title is its name, preceded by the name of its parent test, preceded by the name of its grandparent test, and so on.
 
 **Returns:** A string, representing a title that can be used to identify this test.
 
@@ -52,7 +52,7 @@ Get the length of time taken to run this test, in milliseconds.
 
 Add an error to the test's list of recorded errors.
 
-The method requires an [**Error**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object and optionally accepts another argument indicating the test or callback where the error occurred.
+The method requires an [**Error**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object and an indication of the test or callback where the error occurred.
 
 **Arguments:** `({Error} error, {CanaryTest|CanaryTestCalback} location)`
 

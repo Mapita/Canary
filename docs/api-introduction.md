@@ -11,6 +11,20 @@ import CanaryTest from "canary-test";
 const canary = CanaryTest.Group("My Canary Instance");
 ```
 
+You can add tests and groups of tests to your shared Canary instance using the [**test**](api-adding-tests.md#test), [**group**](api-adding-tests.md#group), and [**series**](api-adding-tests.md#series) methods.
+
+``` js
+canary.test("Example test", function(){
+    assert(2 + 2 === 4);
+});
+```
+
+You can run the tests that have been attached to this shared instance by calling its [**doReport**](api-running-tests.md#doreport) method. With the default options, this method will log detailed status messages, then it will immediately terminate the process upon completion. The process will exit with an error status code if any test failed, or with a success status code if no tests failed.
+
+``` js
+canary.doReport();
+```
+
 # The Test Class
 
 The [**CanaryTest**](api-introduction.md) class is the default exported value of the canary-test package. Although most of the work done with Canary will be using the methods of instances of this class, it should not normally be necessary to instantiate a [**CanaryTest**](api-introduction.md) yourself.

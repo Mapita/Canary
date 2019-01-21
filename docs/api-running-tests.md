@@ -28,10 +28,11 @@ Note that the returned object is exactly the same as if [**getReport**](api-runn
 **Examples:**
 
 ``` js
-// A module containing a leftPad implementation and unit tests
-require("leftPad.js");
+// A module containing a leftPad implementation and unit tests, exporting
+// the CanaryTest instance to which the tests are attached.
+const canary = require("leftPad.js").canary;
 // Run tests, output a report, then terminate with an appropriate status code
-require("canary-test").doReport();
+canary.doReport();
 ```
 
 # getReport
@@ -62,7 +63,7 @@ Example of a string returned by a call to [**getSummary**](api-running-tests.md#
 
 # run
 
-Run the test asynchronously.
+Run the test asynchronously. In the case of a test group or series, child tests will also be run.
 
 **Returns:** A [**Promise**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) which is resolved when the test is completed. This promise should not ever be rejected, even in the case of a test failure.
 

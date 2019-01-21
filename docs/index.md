@@ -16,7 +16,7 @@ A simple example of JavaScript code tested using Canary:
 
 ``` js
 // This library
-const canary = require("canary-test").Group("leftPad");
+const canary = require("canary-test").Group("leftPad package");
 // Node's built-in assertion library
 const assert = require("assert");
 
@@ -56,12 +56,12 @@ Running tests via Canary...
 Completed test "leftPad => returns the input when it's as long as or longer than the input length". (0.000s)
 Completed test "leftPad => pads shorter inputs with spaces to match the desired length". (0.000s)
 Completed test group "leftPad". (0.001s)
-Completed test group "Canary". (0.003s)
+Completed test group "leftPad package". (0.002s)
 Finished running 4 tests.
-✓ Canary (0.003s)
-  ✓ leftPad (0.001s)
-    ✓ returns the input when it's as long as or longer than the input length (0.000s)
-    ✓ pads shorter inputs with spaces to match the desired length (0.000s)
+✓ leftPad package
+  ✓ leftPad
+    ✓ returns the input when it's as long as or longer than the input length
+    ✓ pads shorter inputs with spaces to match the desired length
 4 of 4 tests passed.
 Status: OK
 ```
