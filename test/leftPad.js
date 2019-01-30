@@ -2,7 +2,7 @@
 // Try it out with `node leftPad.js`
 
 // This library
-const canary = require("../dist/canary.js").Group("leftPad package");
+const canary = require("../dist/src/canary.js").Group("leftPad package");
 // Node's built-in assertion library
 const assert = require("assert");
 

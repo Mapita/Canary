@@ -4,7 +4,8 @@ import {getCallerLocation, normalizePath} from "./util";
 
 // Function types accepted for a test callback body.
 export type CanaryTestCallbackBody = (
-    ((test: CanaryTest) => void) | ((test: CanaryTest) => Promise<any>)
+    ((this: CanaryTest, test: CanaryTest) => void) |
+    ((this: CanaryTest, test: CanaryTest) => Promise<any>)
 );
 
 // Enumeration of valid test callback types.
@@ -125,7 +126,8 @@ export namespace CanaryTestError {
 
 // Function types accepted for a CanaryTest body function.
 export type CanaryTestBody = (
-    ((test: CanaryTest) => void) | ((test: CanaryTest) => Promise<any>)
+    ((this: CanaryTest, test: CanaryTest) => void) |
+    ((this: CanaryTest, test: CanaryTest) => Promise<any>)
 );
 
 // Acceptable signature for CanaryTest filter functions.
@@ -621,13 +623,15 @@ export class CanaryTest{
     // and the second argument is an optional location indicating where the
     // error was encountered, such as a CanaryTest instance or a
     // CanaryTestCallback instance.
-    addError(error: Error, location: CanaryTestErrorLocation): CanaryTestError {
+    // If no location was given explicitly, then the test instance is used as
+    // the location.
+    addError(error: Error, location?: CanaryTestErrorLocation): CanaryTestError {
         if(error){
             this.log(red(`Encountered an error while running test "${this.name}":\n  ${error.message}`));
         }else{
             this.log(red(`Encountered an error while running test "${this.name}".`));
         }
-        const testError = new CanaryTestError(this, error, location);
+        const testError = new CanaryTestError(this, error, location || this);
         this.errors.push(testError);
         return testError;
     }
