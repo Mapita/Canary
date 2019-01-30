@@ -1,4 +1,4 @@
-export declare type CanaryTestCallbackBody = (((test: CanaryTest) => void) | ((test: CanaryTest) => Promise<any>));
+export declare type CanaryTestCallbackBody = (((this: CanaryTest, test: CanaryTest) => void) | ((this: CanaryTest, test: CanaryTest) => Promise<any>));
 export declare enum CanaryTestCallbackType {
     onBegin = "onBegin",
     onEnd = "onEnd",
@@ -37,7 +37,7 @@ export declare class CanaryTestError {
 export declare namespace CanaryTestError {
     type Location = CanaryTestErrorLocation;
 }
-export declare type CanaryTestBody = (((test: CanaryTest) => void) | ((test: CanaryTest) => Promise<any>));
+export declare type CanaryTestBody = (((this: CanaryTest, test: CanaryTest) => void) | ((this: CanaryTest, test: CanaryTest) => Promise<any>));
 export declare type CanaryTestFilter = (test: CanaryTest) => any;
 export interface CanaryTestReport {
     unhandledError: null | Error;
@@ -137,7 +137,7 @@ export declare class CanaryTest {
     onEachEnd(name: string, callback: CanaryTestCallbackBody): CanaryTestCallback;
     runCallbacks(exitOnError: boolean, callbackList: CanaryTestCallback[]): Promise<void>;
     initialize(): Promise<void>;
-    addError(error: Error, location: CanaryTestErrorLocation): CanaryTestError;
+    addError(error: Error, location?: CanaryTestErrorLocation): CanaryTestError;
     fail(): Promise<void>;
     fail(error: Error, location: CanaryTestErrorLocation): Promise<void>;
     abort(): Promise<void>;

@@ -490,6 +490,8 @@ class CanaryTest {
     // and the second argument is an optional location indicating where the
     // error was encountered, such as a CanaryTest instance or a
     // CanaryTestCallback instance.
+    // If no location was given explicitly, then the test instance is used as
+    // the location.
     addError(error, location) {
         if (error) {
             this.log(util_1.red(`Encountered an error while running test "${this.name}":\n  ${error.message}`));
@@ -497,7 +499,7 @@ class CanaryTest {
         else {
             this.log(util_1.red(`Encountered an error while running test "${this.name}".`));
         }
-        const testError = new CanaryTestError(this, error, location);
+        const testError = new CanaryTestError(this, error, location || this);
         this.errors.push(testError);
         return testError;
     }
