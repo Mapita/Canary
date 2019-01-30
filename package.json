@@ -1,8 +1,9 @@
 {
   "name": "canary-test",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Write and run automated tests in JavaScript code.",
   "keywords": [
+    "canary",
     "test",
     "testing",
     "unit test",
@@ -11,14 +12,13 @@
   ],
   "homepage": "https://github.com/Mapita/Canary",
   "license": "MIT",
-  "dependencies": {},
-  "main": "dist/canary.js",
-  "types": "dist/canary.d.ts",
+  "main": "dist/src/canary.js",
+  "types": "dist/src/canary.d.ts",
   "files": [
     "readme.md",
     "LICENSE",
     "package.json",
-    "dist/*"
+    "dist/src/*"
   ],
   "repository": {
     "type": "git",
@@ -40,11 +40,11 @@
   ],
   "scripts": {
     "build": "./node_modules/.bin/tsc",
-    "test": "npm run build && node test/test.js && node test/leftPad.js",
+    "test": "npm run build && node dist/test/test.js && node test/leftPad.js",
     "prepublish": "npm test"
   },
   "devDependencies": {
-    "@types/node": "^10.12.18",
-    "typescript": "^3.2.2"
+    "@types/node": "10.12.18",
+    "typescript": "3.2.2"
   }
 }
