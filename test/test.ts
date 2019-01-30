@@ -1,13 +1,19 @@
-const CanaryTest = require("../dist/canary").default;
-const canary = require("../dist/canary").Group("Canary Test");
-const assert = require("assert");
+import * as assert from "assert";
+import {CanaryTest} from "../src/canary";
+
+const canary = CanaryTest.Group("Canary Test");
 
 // Extremely basic test runner to test the test runner
-const allTests = [];
-function addTest(test){
+
+type CanaryTestTest = () => Promise<void>;
+
+const allTests: CanaryTestTest[] = [];
+
+function addTest(test: CanaryTestTest): void {
     allTests.push(test);
 }
-async function runTests(){
+
+async function runTests(): Promise<void> {
     console.log(`Running ${allTests.length} tests...`);
     for(let test of allTests){
         try{
@@ -27,8 +33,10 @@ async function runTests(){
     process.exit(0);
 }
 
+// And now, the tests...
+
 addTest(
-    async function testReferencesToCanaryClasses(){
+    async function testReferencesToCanaryClasses(): Promise<void> {
         // Check CanaryTest class
         assert(canary instanceof CanaryTest);
         // Check CanaryTestCallback class
@@ -41,7 +49,7 @@ addTest(
 );
 
 addTest(
-    async function testSimpleSynchronousTests(){
+    async function testSimpleSynchronousTests(): Promise<void> {
         // Set up the test
         const simplePassingTest = canary.test("Example passing test", function(){
             // do nothing
@@ -66,7 +74,7 @@ addTest(
 );
 
 addTest(
-    async function testSimpleAsynchronousTests(){
+    async function testSimpleAsynchronousTests(): Promise<void> {
         // Set up the test
         const simplePassingTest = canary.test("Example passing test", async function(){
             // do nothing
@@ -91,7 +99,7 @@ addTest(
 );
 
 addTest(
-    async function testWithPassingSyncAndAsyncTests(){
+    async function testWithPassingSyncAndAsyncTests(): Promise<void> {
         // Set up the test
         const syncPassingTest = canary.test("Synchronous passing test", function(){
             // do nothing
@@ -99,8 +107,8 @@ addTest(
         const asyncPassingTest = canary.test("Asynchronous passing test", async function(){
             // do nothing
         });
-        let nestedSyncPassingTest;
-        let nestedAsyncPassingTest;
+        let nestedSyncPassingTest: CanaryTest | null = null;
+        let nestedAsyncPassingTest: CanaryTest | null = null;
         const passingTestGroup = canary.group("Example test group", function(){
             nestedSyncPassingTest = canary.test("Nested synchronous passing test", function(){
                 // do nothing
@@ -115,16 +123,16 @@ addTest(
         assert(syncPassingTest.success);
         assert(asyncPassingTest.success);
         assert(passingTestGroup.success);
-        assert(nestedSyncPassingTest.success);
-        assert(nestedAsyncPassingTest.success);
+        assert(nestedSyncPassingTest && nestedSyncPassingTest!.success);
+        assert(nestedAsyncPassingTest && nestedAsyncPassingTest!.success);
         assert(canary.success);
     }
 );
 
 addTest(
-    async function testExecutionOrderOfTests(){
+    async function testExecutionOrderOfTests(): Promise<void> {
         // Set up the test
-        let counter = 0;
+        let counter: number = 0;
         const firstTest = canary.test("First test (synchronous)", function(){
             assert(counter === 0);
             counter++;
@@ -154,9 +162,9 @@ addTest(
 );
 
 addTest(
-    async function testGroupVsTestSeriesBehavior(){
+    async function testGroupVsTestSeriesBehavior(): Promise<void> {
         // Set up the test
-        let counter = 0;
+        let counter: number = 0;
         const testGroup = canary.group("Failing test group", function(){
             this.test("First test (passing)", function(){
                 // do nothing
@@ -204,10 +212,10 @@ addTest(
 );
 
 addTest(
-    async function testGettingNamesAndTitles(){
+    async function testGettingNamesAndTitles(): Promise<void> {
         // Set up the test
-        let test;
-        let callback;
+        let test: CanaryTest | null = null;
+        let callback: CanaryTest.Callback | null = null;
         const group = canary.group("Example test group", function(){
             test = this.test("Example test", function(){
                 // do nothing
@@ -221,15 +229,17 @@ addTest(
         // Verify correct results
         assert(group.getName() === "Example test group");
         assert(group.getTitle() === "Example test group");
-        assert(test.getName() === "Example test");
-        assert(test.getTitle() === "Example test group => Example test");
-        assert(callback.getName() === "Example test group => onEnd (Example callback)");
-        assert(callback.getTitle() === "Example test group => onEnd (Example callback)");
+        assert(test);
+        assert(test!.getName() === "Example test");
+        assert(test!.getTitle() === "Example test group => Example test");
+        assert(callback);
+        assert(callback!.getName() === "Example test group => onEnd (Example callback)");
+        assert(callback!.getTitle() === "Example test group => onEnd (Example callback)");
     }
 )
 
 addTest(
-    async function testDoReportFilteringBehavior(){
+    async function testDoReportFilteringBehavior(): Promise<void> {
         // Set up the test
         const passingTest = canary.test("Passing test", function(){
             // do nothing
@@ -330,9 +340,9 @@ addTest(
 );
 
 addTest(
-    async function testSuccessfulGroupCallbackOrder(){
+    async function testSuccessfulGroupCallbackOrder(): Promise<void> {
         // Set up the test
-        let counter = 0;
+        let counter: number = 0;
         const testGroup = canary.group("Example test group", function(){
             this.onBegin(function(){
                 assert(counter === 0);
@@ -360,7 +370,7 @@ addTest(
 );
 
 addTest(
-    async function testSuccessfulGroupEachCallbackOrder(){
+    async function testSuccessfulGroupEachCallbackOrder(): Promise<void> {
         // Set up the test
         // The order of events should go like this:
         // 0: Parent => onBegin
@@ -373,7 +383,7 @@ addTest(
         // 7: Second child => onEnd
         // 8: Parent => onEachEnd (Second child)
         // 9: Parent => onEnd
-        let counter = 0;
+        let counter: number = 0;
         const testGroup = canary.group("Parent test group", function(){
             this.onBegin(function(){
                 assert(counter === 0);
@@ -429,7 +439,7 @@ addTest(
 );
 
 addTest(
-    async function testAddingAndCheckingTags(){
+    async function testAddingAndCheckingTags(): Promise<void> {
         const test = canary.test("Example test", function(){
             // do nothing
         });
@@ -449,7 +459,7 @@ addTest(
 );
 
 addTest(
-    async function testGroupFailedChildren(){
+    async function testGroupFailedChildren(): Promise<void> {
         // Set up the test
         const failingGroup = canary.group("Example test group", function(){
             this.test("First test (passing)", function(){
@@ -489,7 +499,7 @@ addTest(
 );
 
 addTest(
-    async function testTodoFlag(){
+    async function testTodoFlag(): Promise<void> {
         const someTest = canary.test("Example test", () => {});
         assert(!someTest.isTodo);
         assert(!someTest.shouldSkip());
@@ -500,7 +510,7 @@ addTest(
 );
 
 addTest(
-    async function testIgnoreAndUnignore(){
+    async function testIgnoreAndUnignore(): Promise<void> {
         const someTest = canary.test("Example test", () => {});
         assert(!someTest.isIgnored);
         assert(!someTest.shouldSkip());
@@ -514,7 +524,7 @@ addTest(
 );
 
 addTest(
-    async function testApplyFilterAndResetFilter(){
+    async function testApplyFilterAndResetFilter(): Promise<void> {
         // Set up tests
         const firstTest = canary.test("Test #1", () => {});
         const secondTest = canary.test("Test #2", () => {});
@@ -546,10 +556,10 @@ addTest(
 );
 
 addTest(
-    async function testParentsAndChildren(){
+    async function testParentsAndChildren(): Promise<void> {
         // Set up the test
-        let firstTest;
-        let secondTest;
+        let firstTest: CanaryTest | null = null;
+        let secondTest: CanaryTest | null = null;
         const testGroup = canary.group("Example test group", function(){
             firstTest = this.test("First test (passing)", function(){
                 // do nothing
@@ -570,24 +580,24 @@ addTest(
         assert(testGroup.getChildren()[0] === firstTest);
         assert(testGroup.getChildren()[1] === secondTest);
         assert(testGroup.getParent() === canary);
-        assert(firstTest.getParent() === testGroup);
-        assert(secondTest.getParent() === testGroup);
+        assert(firstTest!.getParent() === testGroup);
+        assert(secondTest!.getParent() === testGroup);
         assert(isolatedTest.getParent() === null);
         // Can't remove a test that isn't in the tree
         assert(!canary.removeTest(isolatedTest));
         assert(!testGroup.removeTest(testGroup));
         // Make changes to the test tree
-        assert(canary.removeTest(firstTest));
+        assert(canary.removeTest(firstTest!));
         assert(canary.getChildren().length === 1);
         assert(testGroup.getChildren().length === 1);
-        assert(secondTest.orphan());
+        assert(secondTest!.orphan());
         assert(canary.getChildren().length === 1);
         assert(testGroup.getChildren().length === 0);
     }
 );
 
 addTest(
-    async function testDuration(){
+    async function testDuration(): Promise<void> {
         // Set up the test
         const someTest = canary.test("Example test", function(){
             return new Promise((resolve, reject) => {
@@ -597,21 +607,21 @@ addTest(
         // Run canary
         await canary.run();
         // Verify correct results
-        const milliseconds = someTest.getDurationMilliseconds();
+        const milliseconds: number = someTest.getDurationMilliseconds();
         assert(Math.abs(100 - milliseconds) < 50);
         assert(someTest.getDurationSeconds() === milliseconds * 0.001);
     }
 );
 
 addTest(
-    async function testLogFunction(){
+    async function testLogFunction(): Promise<void> {
         // Check initial conditions
         canary.silent();
         canary.notVerbose();
         assert(canary.getLogFunction() === console.log);
         // Define a log function for testing
-        let counter = 0;
-        const logFunction = message => counter++;
+        let counter: number = 0;
+        const logFunction = (message: string) => (counter++);
         canary.setLogFunction(logFunction);
         // Check that child tests will also use the same log function
         const someTest = canary.test("Example test", () => {});
@@ -644,13 +654,13 @@ addTest(
 );
 
 addTest(
-    async function testGetReport(){
+    async function testGetReport(): Promise<void> {
         // Set up the test
-        let firstTest;
-        let secondTest;
-        let thirdTest;
-        let fourthTest;
-        let fifthTest;
+        let firstTest: CanaryTest | null = null;
+        let secondTest: CanaryTest | null = null;
+        let thirdTest: CanaryTest | null = null;
+        let fourthTest: CanaryTest | null = null;
+        let fifthTest: CanaryTest | null = null;
         const failingGroup = canary.series("First example test series", function(){
             firstTest = this.test("First test (passing)", function(){
                 // do nothing
@@ -679,38 +689,43 @@ addTest(
         assert(report.skipped);
         assert(report.errors);
         assert(report.passed.length === 3);
-        assert(report.passed.indexOf(firstTest) >= 0);
-        assert(report.passed.indexOf(fourthTest) >= 0);
+        assert(firstTest);
+        assert(fourthTest);
+        assert(secondTest);
+        assert(thirdTest);
+        assert(fifthTest);
+        assert(report.passed.indexOf(firstTest!) >= 0);
+        assert(report.passed.indexOf(fourthTest!) >= 0);
         assert(report.passed.indexOf(passingGroup) >= 0);
         assert(report.failed.length === 3);
-        assert(report.failed.indexOf(secondTest) >= 0);
+        assert(report.failed.indexOf(secondTest!) >= 0);
         assert(report.failed.indexOf(failingGroup) >= 0);
         assert(report.failed.indexOf(canary) >= 0);
         assert(report.skipped.length === 2);
-        assert(report.skipped.indexOf(thirdTest) >= 0);
-        assert(report.skipped.indexOf(fifthTest) >= 0);
+        assert(report.skipped.indexOf(thirdTest!) >= 0);
+        assert(report.skipped.indexOf(fifthTest!) >= 0);
         assert(report.errors.length === 1);
-        assert(report.errors[0].message = "Example test failure");
+        assert(report.errors[0].message === "Example test failure");
         assert(report.errors[0].getLocation() === secondTest);
     }
 );
 
 addTest(
-    async function testInstantiateDisconnectedTests(){
+    async function testInstantiateDisconnectedTests(): Promise<void> {
         // Create a test that is not a member of the root tree
-        const test = new CanaryTest("some test");
+        const test: CanaryTest = new CanaryTest("some test");
         assert(test);
         assert(!test.isGroup);
         assert(!test.isSeries);
         assert(canary.getChildren().length === 0);
         // Create a group that is not a member of the root tree
-        const group = CanaryTest.Group("some group");
+        const group: CanaryTest = CanaryTest.Group("some group");
         assert(group);
         assert(group.isGroup);
         assert(!group.isSeries);
         assert(canary.getChildren().length === 0);
         // Create a series that is not a member of the root tree
-        const series = CanaryTest.Series("some series");
+        const series: CanaryTest = CanaryTest.Series("some series");
         assert(series);
         assert(series.isGroup);
         assert(series.isSeries);
