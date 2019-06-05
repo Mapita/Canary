@@ -135,11 +135,21 @@ export type CanaryTestFilter = (test: CanaryTest) => any;
 
 // Object returned by CanaryTest.getReport and CanaryTest.doReport.
 export interface CanaryTestReport {
+    // Unhandled fatal error in the test runner, if any.
+    // If you got one of these then either you misused Canary's API
+    // or Canary itself ran into a bug.
     unhandledError: null | Error;
+    // List of passed tests.
     passed: CanaryTest[];
+    // List of failed tests.
     failed: CanaryTest[];
+    // List of tests that did not run, e.g. due to filtering.
     skipped: CanaryTest[];
+    // List of errors encountered while running tests.
     errors: CanaryTestError[];
+    // Suggested process exit status code:
+    // 1 when any tests failed and 0 otherwise.
+    status: number;
 }
 
 // Options object accepted by the CanaryTest.doReport method.
@@ -147,11 +157,11 @@ export interface CanaryTestReportOptions {
     // Report only a small amount of information regarding the test
     // process and its results, and set all tests to run silently.
     concise?: boolean;
-    // Report no information at all regarding the test process.
+    // Log no information at all regarding the test process.
     // When keepAlive is not set, the process exit status code can be used
     // to see whether the test was successful or not.
     silent?: boolean;
-    // Report a great deal of information regarding the test process
+    // Log a great deal of information regarding the test process
     // and set all tests to run verbosely.
     verbose?: boolean;
     // Don't terminate the process after running tests and reporting
@@ -172,6 +182,19 @@ export interface CanaryTestReportOptions {
     // such a file path.
     // Note that file paths are case-sensitive and normalized before comparison.
     paths?: string[];
+    // Optionally override the test's default or previously set logging function.
+    logFunction?: Function;
+    // Optional additional named sections to include in the report.
+    // Sections should return a message, and may do so either synchronously
+    // or asynchronously via a Promise.
+    // Will still run and be logged when the concise option is set.
+    // Will not run and will not be logged when the silent option is set.
+    addSections?: {
+        [key: string]: (
+            (this: CanaryTest, test: CanaryTest, report: CanaryTestReport) =>
+            (string | string[] | Promise<string | string[]>)
+        ),
+    },
 }
 
 export class CanaryTest{
@@ -1188,19 +1211,18 @@ export class CanaryTest{
             errors.push(...results.errors);
         }
         return {
+            unhandledError: null,
             passed: passed,
             failed: failed,
             skipped: skipped,
             errors: errors,
-            unhandledError: null,
+            status: failed.length ? 1 : 0,
         };
     }
     // A one-line, one-size-fits-most way to run the test and all child tests,
     // log the results, then terminate the process with an appropriate status
     // code.
-    async doReport(
-        options?: CanaryTestReportOptions
-    ): Promise<CanaryTestReport> {
+    async doReport(options?: CanaryTestReportOptions): Promise<CanaryTestReport> {
         const log = (message: string) => {
             if(!options || !options.silent){
                 return this.getLogFunction()(message);
@@ -1208,15 +1230,19 @@ export class CanaryTest{
         };
         try{
             // Set a default empty options object when none was specified.
-            options = options || {};
-            // Indicate that tests are about to be run!
-            log(`Running tests via Canary...`);
+            // options = options || {};
+            // Configure logging function
+            if(options && typeof(options.logFunction) === "function") {
+                this.logFunction = options.logFunction;
+            }
             // When "concise" is set, instruct tests to run silently.
             if(options && options.concise){
                 this.silent();
             }else if(options && options.verbose){
                 this.verbose();
             }
+            // Indicate that tests are about to be run!
+            log(`Running tests via Canary...`);
             // Expand test groups
             this.expandGroups();
             // Construct a list of filter functions. Only run tests which
@@ -1291,6 +1317,32 @@ export class CanaryTest{
                 log(red("Encountered 1 error."));
             }else if(report.errors.length){
                 log(red(`Encountered ${report.errors.length} errors.`));
+            }else {
+                this.logVerbose("Encountered no test errors.");
+            }
+            if(options && !options.silent && options.addSections &&
+                typeof(options.addSections) === "object"
+            ) {
+                this.logVerbose("Showing additional report sections...");
+                for(const key in options.addSections) {
+                    const addSection = options.addSections[key];
+                    if(typeof(addSection) !== "function") {
+                        log(red("Section ${key} is not a function."));
+                        continue;
+                    }
+                    log(`Section: ${key}`);
+                    const result = addSection.call(this, this, report);
+                    const message = (
+                        result instanceof Promise ? await result : result
+                    );
+                    if(Array.isArray(message)) {
+                        for(const line of message) {
+                            log(line);
+                        }
+                    }else {
+                        log(String(message));
+                    }
+                }
             }
             if(!options || !options.concise){
                 this.logVerbose("Getting a text summary...");
@@ -1346,7 +1398,7 @@ export class CanaryTest{
                 process.exit(1);
             }
             return {
-                unhandledError: error,
+                unhandledError: error, status: 1,
                 passed: [], failed: [], skipped: [], errors: [],
             };
         }

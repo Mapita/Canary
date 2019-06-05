@@ -666,5 +666,45 @@ addTest(async function testInstantiateDisconnectedTests() {
     assert(series.isSeries);
     assert(canary.getChildren().length === 0);
 });
+addTest(async function testDoReportAddSections() {
+    // Set up the test
+    const passingTest = canary.test("Passing test", function () {
+        // do nothing
+    });
+    // Run canary, passing an addSections object
+    let logData = "";
+    await canary.doReport({
+        keepAlive: true,
+        logFunction: (message) => (logData += `${message}\n`),
+        addSections: {
+            "Synchronous single-line": (test, report) => {
+                return "Alpha";
+            },
+            "Synchronous multi-line": (test, report) => {
+                return ["Beta", "Charlie"];
+            },
+            "Asynchronous single-line": async (test, report) => {
+                return "Delta";
+            },
+            "Asynchronous multi-line": async (test, report) => {
+                return ["Epsilon", "Foxtrot"];
+            },
+        },
+    });
+    assert(logData.indexOf([
+        "Section: Synchronous single-line",
+        "Alpha",
+        "Section: Synchronous multi-line",
+        "Beta",
+        "Charlie",
+        "Section: Asynchronous single-line",
+        "Delta",
+        "Section: Asynchronous multi-line",
+        "Epsilon",
+        "Foxtrot",
+    ].join("\n")) >= 0);
+    canary.reset();
+    canary.resetFilter();
+});
 runTests();
 //# sourceMappingURL=test.js.map
