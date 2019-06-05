@@ -1025,11 +1025,12 @@ class CanaryTest {
             errors.push(...results.errors);
         }
         return {
+            unhandledError: null,
             passed: passed,
             failed: failed,
             skipped: skipped,
             errors: errors,
-            unhandledError: null,
+            status: failed.length ? 1 : 0,
         };
     }
     // A one-line, one-size-fits-most way to run the test and all child tests,
@@ -1043,9 +1044,11 @@ class CanaryTest {
         };
         try {
             // Set a default empty options object when none was specified.
-            options = options || {};
-            // Indicate that tests are about to be run!
-            log(`Running tests via Canary...`);
+            // options = options || {};
+            // Configure logging function
+            if (options && typeof (options.logFunction) === "function") {
+                this.logFunction = options.logFunction;
+            }
             // When "concise" is set, instruct tests to run silently.
             if (options && options.concise) {
                 this.silent();
@@ -1053,6 +1056,8 @@ class CanaryTest {
             else if (options && options.verbose) {
                 this.verbose();
             }
+            // Indicate that tests are about to be run!
+            log(`Running tests via Canary...`);
             // Expand test groups
             this.expandGroups();
             // Construct a list of filter functions. Only run tests which
@@ -1125,6 +1130,31 @@ class CanaryTest {
             else if (report.errors.length) {
                 log(util_1.red(`Encountered ${report.errors.length} errors.`));
             }
+            else {
+                this.logVerbose("Encountered no test errors.");
+            }
+            if (options && !options.silent && options.addSections &&
+                typeof (options.addSections) === "object") {
+                this.logVerbose("Showing additional report sections...");
+                for (const key in options.addSections) {
+                    const addSection = options.addSections[key];
+                    if (typeof (addSection) !== "function") {
+                        log(util_1.red("Section ${key} is not a function."));
+                        continue;
+                    }
+                    log(`Section: ${key}`);
+                    const result = addSection.call(this, this, report);
+                    const message = (result instanceof Promise ? await result : result);
+                    if (Array.isArray(message)) {
+                        for (const line of message) {
+                            log(line);
+                        }
+                    }
+                    else {
+                        log(String(message));
+                    }
+                }
+            }
             if (!options || !options.concise) {
                 this.logVerbose("Getting a text summary...");
                 log(this.getSummary());
@@ -1182,7 +1212,7 @@ class CanaryTest {
                 process.exit(1);
             }
             return {
-                unhandledError: error,
+                unhandledError: error, status: 1,
                 passed: [], failed: [], skipped: [], errors: [],
             };
         }

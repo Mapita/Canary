@@ -45,6 +45,7 @@ export interface CanaryTestReport {
     failed: CanaryTest[];
     skipped: CanaryTest[];
     errors: CanaryTestError[];
+    status: number;
 }
 export interface CanaryTestReportOptions {
     concise?: boolean;
@@ -55,6 +56,10 @@ export interface CanaryTestReportOptions {
     names?: string[];
     tags?: string[];
     paths?: string[];
+    logFunction?: Function;
+    addSections?: {
+        [key: string]: ((this: CanaryTest, test: CanaryTest, report: CanaryTestReport) => (string | string[] | Promise<string | string[]>));
+    };
 }
 export declare class CanaryTest {
     static currentlyExpandingGroup: null | CanaryTest;

@@ -16,6 +16,8 @@ These are the attributes of the options object which the [**doReport**](api-runn
 - `{array} names`: An array of names to filter tests by; only tests with one of these names or belonging to a group with one of these names will be run.
 - `{array} tags`: An array of [tags](api-tagging-tests.md) to filter tests by; only tests with one of these tags or belonging to a group with one of these tags will be run. Tags can be added to tests using the [**tags**](api-tagging-tests.md#tags) method.
 - `{array} paths`: An array of file paths to filter tests by; only tests declared in a file whose path matches one of these strings, or belonging to a group with a matching file path, will be run. Paths are case-sensitive, and they are normalized before comparison.
+- `{function} logFunction`: Overrides the test's log function setting and uses this log function instead to output report information.
+- `{object} addSections`: Maps section title strings to section content generation functions. This can be used to include additional information in the report text. The section functions will receive the reporting [**CanaryTest**](api-introduction.md) object as the first argument and the test results report object as the second argument. The function should either return a string, an array of strings, or a Promise returning a string or array of strings. Promises will be waited for, and every string will be logged as a separate line.
 
 When a filter applies positively to a test, that test's containing group, and its containing group, and so on will be run (though not necessarily their other child tests), and all children of the matching test will be run.
 

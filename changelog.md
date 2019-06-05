@@ -1,3 +1,11 @@
+# v1.1.2
+
+Released 5 June 2019.
+
+- Report objects now include a suggested process exit status.
+- The doReport function now accepts a logFunction option.
+- The doReport function now accepts an addSections option.
+
 # v1.1.1
 
 Released 30 January 2019.
