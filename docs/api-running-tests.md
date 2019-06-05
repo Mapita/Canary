@@ -39,14 +39,13 @@ canary.doReport();
 
 # getReport
 
-Get an object containing a list of passed tests, a list of failed tests, a list of skipped tests, and a list of errors.
+Get an object containing a list of passed tests, a list of failed tests, a list of skipped tests, and a list of errors. It also contains a reference to the unhandled test runner error, if there was any, and a suggested process exit status.
 
 The lists of tests are arrays of [**CanaryTest**](api-introduction.md) instances. The list of errors is an array of [**CanaryTestError**](api-error-class.md) instances.
 
 Note that the list of errors includes even those errors encountered while running tests that were later found to be marked as ignored or to be otherwise skipped. Due to this, the presence of errors in the list does not necessarily indicate a test suite failure.
 
-
-**Returns:** An object with **passed**, **failed**, **skipped**, and **errors** attributes.
+**Returns:** An object with **passed**, **failed**, **skipped**, **errors**, **status**, and **unhandledError** attributes.
 
 # getSummary
 
