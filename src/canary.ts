@@ -109,11 +109,14 @@ export class CanaryTestError{
     }
     // Get the line where this error occurred.
     getLine(): string {
-        if(this.error && this.error.stack){
-            let messageLineCount = (!this.error.message ? 1 :
+        if(this.error && this.error.stack &&
+            typeof(this.error.stack) === "string"
+        ){
+            const messageLineCount = (!this.error.message ? 1 :
                 this.error.message.split("\n").length
             );
-            return this.error.stack.split("\n")[messageLineCount].trim();
+            const stackLines = this.error.stack.split("\n");
+            return (stackLines[messageLineCount] || "").trim();
         }else{
             return "";
         }
